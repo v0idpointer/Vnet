@@ -5,20 +5,8 @@
 
 #include <Vnet/IpAddress.h>
 
-#ifdef VNET_PLATFORM_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <Windows.h>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <netdb.h>
-#endif
+#include "SocketsApi.h"
+#include "Sockets/Native.h"
 
 #include <regex>
 #include <cstring>
@@ -128,15 +116,7 @@ std::optional<IpAddress> IpAddress::ParseVersion4(const std::string_view address
         return std::nullopt;
     }
 
-#ifdef VNET_PLATFORM_WINDOWS
-    const std::uint32_t addr = sockaddr.sin_addr.S_un.S_addr;
-#else
-    const std::uint32_t addr = sockaddr.sin_addr.s_addr;
-#endif
-
-    return IpAddress(
-        (addr & 0xFF), ((addr >> 8) & 0xFF), ((addr >> 16) & 0xFF), ((addr >> 24) & 0xFF)
-    );
+    return Native::ToIpAddress4(&sockaddr);
 }
 
 std::optional<IpAddress> IpAddress::ParseVersion6(const std::string_view address, const bool exceptions) {
@@ -148,13 +128,7 @@ std::optional<IpAddress> IpAddress::ParseVersion6(const std::string_view address
         return std::nullopt;
     }
 
-#ifdef VNET_PLATFORM_WINDOWS
-    const std::uint8_t* bytes = sockaddr.sin6_addr.u.Byte;
-#else
-    const std::uint8_t* bytes = sockaddr.sin6_addr.s6_addr;
-#endif
-
-    return IpAddress(std::span<const std::uint8_t>(bytes, 16));
+    return Native::ToIpAddress6(&sockaddr);
 }
 
 IpAddress IpAddress::Parse(const std::string_view address) {

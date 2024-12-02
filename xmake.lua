@@ -7,6 +7,7 @@ target("Vnetcore")
     add_files("Vnetcore/*.cpp")
     add_files("Vnetcore/Sockets/*.cpp")
     add_includedirs("Include")
+    add_includedirs("Vnetcore")
     add_defines("VNET_BUILD_VNETCORE")
 
     if is_plat("windows") then 

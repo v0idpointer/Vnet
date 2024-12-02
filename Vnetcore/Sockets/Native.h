@@ -6,6 +6,7 @@
 #ifndef _VNETCORE_SOCKETS_NATIVE_H_
 #define _VNETCORE_SOCKETS_NATIVE_H_
 
+#include <Vnet/IpAddress.h>
 #include <Vnet/Sockets/AddressFamily.h>
 #include <Vnet/Sockets/SocketType.h>
 #include <Vnet/Sockets/ProtocolType.h>
@@ -17,6 +18,8 @@
 
 struct addrinfo;
 struct sockaddr;
+struct sockaddr_in;
+struct sockaddr_in6;
 
 namespace Vnet::Sockets {
 
@@ -37,6 +40,9 @@ namespace Vnet::Sockets {
         static std::int32_t ToNativeSocketType(const SocketType type) noexcept;
         static std::int32_t ToNativeProtocolType(const ProtocolType proto) noexcept;
         static std::int32_t ToNativeSocketFlags(const SocketFlags flags) noexcept;
+
+        static IpAddress ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept;
+        static IpAddress ToIpAddress6(const struct sockaddr_in6* const sockaddr) noexcept;
 
         static struct addrinfo* CreateNativeAddrinfoFromISocketAddress(const ISocketAddress& sockaddr);
         static void NativeSockaddrToISocketAddress(const struct sockaddr* source, ISocketAddress& destination);

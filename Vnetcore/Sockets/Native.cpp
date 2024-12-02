@@ -3,27 +3,13 @@
     Copyright (c) 2024 V0idPointer
 */
 
-#include "Native.h"
+#include "SocketsApi.h"
+#include "Sockets/Native.h"
 
 #include <Vnet/Platform.h>
 #include <Vnet/Sockets/Socket.h>
 #include <Vnet/Sockets/SocketException.h>
 #include <Vnet/Sockets/IpSocketAddress.h>
-
-#ifdef VNET_PLATFORM_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <Windows.h>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <netdb.h>
-#endif
 
 using namespace Vnet;
 using namespace Vnet::Sockets;
@@ -101,6 +87,30 @@ std::int32_t Native::ToNativeSocketFlags(const SocketFlags flags) noexcept {
     return nf;
 }
 
+IpAddress Native::ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept {
+
+#ifdef VNET_PLATFORM_WINDOWS
+    const std::uint32_t addr = sockaddr->sin_addr.S_un.S_addr;
+#else
+    const std::uint32_t addr = sockaddr->sin_addr.s_addr;
+#endif
+
+    return IpAddress(
+        (addr & 0xFF), ((addr >> 8) & 0xFF), ((addr >> 16) & 0xFF), ((addr >> 24) & 0xFF)
+    );
+}
+
+IpAddress Native::ToIpAddress6(const struct sockaddr_in6* const sockaddr) noexcept {
+
+#ifdef VNET_PLATFORM_WINDOWS
+    const std::uint8_t* bytes = sockaddr->sin6_addr.u.Byte;
+#else
+    const std::uint8_t* bytes = sockaddr->sin6_addr.s6_addr;
+#endif
+
+    return IpAddress(std::span<const std::uint8_t>(bytes, 16));
+}
+
 struct addrinfo* Native::CreateNativeAddrinfoFromISocketAddress(const ISocketAddress& sockaddr) {
 
     // ISocketAddress for IPv4 and IPv6
@@ -123,30 +133,6 @@ struct addrinfo* Native::CreateNativeAddrinfoFromISocketAddress(const ISocketAdd
     throw std::invalid_argument("Unknown ISocketAddress implementation.");
 }
 
-static inline IpAddress GetIpAddress4(const struct sockaddr_in* const sockaddr) {
-
-#ifdef VNET_PLATFORM_WINDOWS
-    const std::uint32_t addr = sockaddr->sin_addr.S_un.S_addr;
-#else
-    const std::uint32_t addr = sockaddr->sin_addr.s_addr;
-#endif
-
-    return IpAddress(
-        (addr & 0xFF), ((addr >> 8) & 0xFF), ((addr >> 16) & 0xFF), ((addr >> 24) & 0xFF)
-    );
-}
-
-static inline IpAddress GetIpAddress6(const struct sockaddr_in6* const sockaddr) {
-
-#ifdef VNET_PLATFORM_WINDOWS
-    const std::uint8_t* bytes = sockaddr->sin6_addr.u.Byte;
-#else
-    const std::uint8_t* bytes = sockaddr->sin6_addr.s6_addr;
-#endif
-
-    return IpAddress(std::span<const std::uint8_t>(bytes, 16));
-}
-
 static inline std::uint16_t SwapEndianness(const std::uint16_t val) noexcept {
     return (((val & 0xFF) << 8) | ((val & 0xFF00) >> 8));
 }
@@ -158,12 +144,12 @@ void Native::NativeSockaddrToISocketAddress(const struct sockaddr* source, ISock
         
         if (source->sa_family == AF_INET) {
             const struct sockaddr_in* pSockaddr = reinterpret_cast<const struct sockaddr_in*>(source);
-            pIpSockaddr->SetIpAddress(GetIpAddress4(pSockaddr));
+            pIpSockaddr->SetIpAddress(Native::ToIpAddress4(pSockaddr));
             pIpSockaddr->SetPort(SwapEndianness(pSockaddr->sin_port));
         }
         else {
             const struct sockaddr_in6* pSockaddr = reinterpret_cast<const struct sockaddr_in6*>(source);
-            pIpSockaddr->SetIpAddress(GetIpAddress6(pSockaddr));
+            pIpSockaddr->SetIpAddress(Native::ToIpAddress6(pSockaddr));
             pIpSockaddr->SetPort(SwapEndianness(pSockaddr->sin6_port));
         }
 
