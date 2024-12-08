@@ -22,6 +22,13 @@ namespace Vnet {
 
     class VNETCOREAPI IpAddress {
 
+    public:
+        static const IpAddress ANY;
+        static const IpAddress LOCALHOST;
+        static const IpAddress BROADCAST;
+        static const IpAddress ANY_V6;
+        static const IpAddress LOCALHOST_V6;
+
     private:
         std::vector<std::uint8_t> m_bytes;
 
@@ -51,20 +58,6 @@ namespace Vnet {
     public:
         static IpAddress Parse(const std::string_view address);
         static std::optional<IpAddress> TryParse(const std::string_view address);
-
-        static inline IpAddress Any(void) noexcept { return { 0, 0, 0, 0 }; }
-        static inline IpAddress Localhost(void) noexcept { return { 127, 0, 0, 1 }; }
-        static inline IpAddress Broadcast(void) noexcept { return { 255, 255, 255, 255 }; }
-
-        static inline IpAddress Any6(void) noexcept {
-            std::uint8_t bytes[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-            return IpAddress(bytes);
-        }
-
-        static inline IpAddress Localhost6(void) noexcept {
-            std::uint8_t bytes[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-            return IpAddress(bytes);
-        }
 
     };
 

@@ -3,6 +3,10 @@
     Copyright (c) 2024 V0idPointer
 */
 
+#ifndef VNET_BUILD_VNETCORE
+#define VNET_BUILD_VNETCORE
+#endif
+
 #include <Vnet/IpAddress.h>
 
 #include "SocketsApi.h"
@@ -17,6 +21,12 @@ using namespace Vnet;
 using namespace Vnet::Sockets;
 
 static const std::regex s_ipv4Regex(R"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))");
+
+const IpAddress IpAddress::ANY = { 0, 0, 0, 0 };
+const IpAddress IpAddress::LOCALHOST = { 127, 0, 0, 1 };
+const IpAddress IpAddress::BROADCAST = { 255, 255, 255, 255 };
+const IpAddress IpAddress::ANY_V6 = { std::vector<std::uint8_t>{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
+const IpAddress IpAddress::LOCALHOST_V6 = { std::vector<std::uint8_t>{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } };
 
 IpAddress::IpAddress() : IpAddress(0, 0, 0, 0) { }
 
@@ -68,7 +78,7 @@ bool IpAddress::IsPrivateAddress() const {
         
         if ((this->m_bytes[0] == 0xFC) || (this->m_bytes[0] == 0xFD)) return true;
         if ((this->m_bytes[0] == 0xFE) || (this->m_bytes[0] == 0x80)) return true;
-        if (this->operator== (IpAddress::Localhost6())) return true;
+        if (this->operator== (IpAddress::LOCALHOST_V6)) return true;
 
         return false;
     }
@@ -77,7 +87,7 @@ bool IpAddress::IsPrivateAddress() const {
     if ((this->m_bytes[0] == 172) && ((this->m_bytes[1] >= 16) && (this->m_bytes[1] < 32))) return true; // class B
     if ((this->m_bytes[0] == 192) && (this->m_bytes[1] == 168)) return true; // class c
     if ((this->m_bytes[0] == 169) && (this->m_bytes[1] == 254)) return true; // apipa
-    if (this->operator== (IpAddress::Localhost())) return true; // loopback
+    if (this->operator== (IpAddress::LOCALHOST)) return true; // loopback
 
     return false;
 }
