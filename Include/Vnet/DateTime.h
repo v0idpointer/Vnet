@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <chrono>
 #include <ctime>
-#include <tuple>
+#include <utility>
 
 namespace Vnet {
 
@@ -69,7 +69,7 @@ namespace Vnet {
     private:
         std::tm GetLocalTime(void) const;
         std::tm GetUTCTime(void) const;
-        std::tuple<std::int32_t, std::int32_t, std::int32_t> GetTimezoneOffsetEx(void) const;
+        std::pair<std::int32_t, std::int32_t> GetTimezoneOffsetEx(void) const;
 
     public:
         std::time_t GetTime(void) const;

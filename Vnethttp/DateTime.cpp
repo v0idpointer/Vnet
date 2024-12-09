@@ -12,6 +12,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 
 using namespace Vnet;
 
@@ -96,7 +97,7 @@ std::tm DateTime::GetUTCTime() const {
     return localTm;
 }
 
-std::tuple<std::int32_t, std::int32_t, std::int32_t> DateTime::GetTimezoneOffsetEx() const {
+std::pair<std::int32_t, std::int32_t> DateTime::GetTimezoneOffsetEx() const {
     
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 
@@ -123,7 +124,7 @@ std::tuple<std::int32_t, std::int32_t, std::int32_t> DateTime::GetTimezoneOffset
 
 #endif
 
-    return { offset, hourOffset, minuteOffset };
+    return { hourOffset, minuteOffset };
 }
 
 std::time_t DateTime::GetTime() const {
@@ -167,7 +168,13 @@ std::int32_t DateTime::GetSeconds(void) const {
 }
 
 std::int32_t DateTime::GetTimezoneOffset(void) const {
-    const auto [offset, _, __] = this->GetTimezoneOffsetEx();
+    
+    const auto [hourOffset, minuteOffset] = this->GetTimezoneOffsetEx();
+
+    std::int32_t offset = 0;
+    offset += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(hourOffset)).count();
+    offset += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes(minuteOffset)).count();
+
     return offset;
 }
 
@@ -203,7 +210,7 @@ std::string DateTime::ToString() const {
     
     std::ostringstream stream;
     const std::tm tm = this->GetLocalTime();
-    const auto [_, hourOffset, minuteOffset] = this->GetTimezoneOffsetEx();
+    const auto [hourOffset, minuteOffset] = this->GetTimezoneOffsetEx();
 
     stream << DateTime::DAY_NAMES[tm.tm_wday] << " ";
     stream << DateTime::MONTH_NAMES[tm.tm_mon] << " ";
@@ -212,7 +219,7 @@ std::string DateTime::ToString() const {
     stream << std::setw(2) << std::setfill('0') << tm.tm_hour << ":";
     stream << std::setw(2) << std::setfill('0') << tm.tm_min << ":";
     stream << std::setw(2) << std::setfill('0') << tm.tm_sec << " ";
-    stream << "GMT+" << std::setw(2) << std::setfill('0') << hourOffset;
+    stream << "GMT" << ((hourOffset < 0) ? '-' : '+') << std::setw(2) << std::setfill('0') << std::abs(hourOffset);
     stream << std::setw(2) << std::setfill('0') << minuteOffset;
 
     return stream.str();
