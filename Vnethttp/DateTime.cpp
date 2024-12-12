@@ -13,11 +13,16 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <algorithm>
+#include <exception>
+#include <stdexcept>
 
 using namespace Vnet;
 
 const std::string_view DateTime::DAY_NAMES[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", };
 const std::string_view DateTime::MONTH_NAMES[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", };
+const DateTime DateTime::MIN_DATE = { 0 };
+const DateTime DateTime::MAX_DATE = { 2147483647 };
 
 DateTime::DateTime() : DateTime(0) { }
 
@@ -251,7 +256,7 @@ std::string DateTime::ToISO8601String() const {
     stream << std::setw(2) << std::setfill('0') << tm.tm_mday << "T";
     stream << std::setw(2) << std::setfill('0') << tm.tm_hour << ":";
     stream << std::setw(2) << std::setfill('0') << tm.tm_min << ":";
-    stream << std::setw(2) << std::setfill('0') << tm.tm_sec << ".000Z";
+    stream << std::setw(2) << std::setfill('0') << tm.tm_sec << "Z";
 
     return stream.str();
 }
@@ -260,10 +265,196 @@ DateTime DateTime::Now() {
     return DateTime(std::chrono::system_clock::now());
 }
 
-DateTime DateTime::MinDate() {
-    return DateTime(0);
+using BadDatetimeFormatException = std::runtime_error;
+
+std::optional<DateTime> DateTime::ParseDateFromString(std::string_view str, const bool exceptions) {
+    
+    auto [hourOffset, minuteOffset] = DateTime::Now().GetTimezoneOffsetEx();
+
+    // check if the name of the week day is valid:
+    const std::string_view dayOfWeek = str.substr(0, 3);
+    const std::string_view* it = std::find(std::begin(DateTime::DAY_NAMES), std::end(DateTime::DAY_NAMES), dayOfWeek); // this is used later.
+    if (it == std::end(DateTime::DAY_NAMES)) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    str = str.substr(4);
+
+    // check if the month name is valid:
+    const std::string_view month = str.substr(0, 3);
+    if (std::find(std::begin(DateTime::MONTH_NAMES), std::end(DateTime::MONTH_NAMES), month) == std::end(DateTime::MONTH_NAMES)) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    // parse the timezone:
+    std::size_t pos;
+    std::string_view timezone = str.substr(21);
+    if ((pos = timezone.find(' ')) != std::string_view::npos) 
+        timezone = timezone.substr(0, pos);
+
+    if (timezone.substr(0, 3) != "GMT") {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    timezone = timezone.substr(3);
+    if (!timezone.empty()) {
+
+        try {
+
+            std::string hours { timezone.substr(1, 2) };
+            std::string minutes { timezone.substr(3, 2) };
+            const std::int32_t k = ((timezone[0] == '+') ? -1 : 1);
+
+            hourOffset += (std::stoi(hours) * k);
+            minuteOffset += (std::stoi(minutes) * k);
+
+        }
+        catch (const std::exception&) {
+            if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+            return std::nullopt;
+        }
+
+    }
+    
+    // parse time and date:
+    std::tm tm = { 0 };
+    std::stringstream stream { std::string(str) };
+    stream.exceptions(std::ios::badbit | std::ios::failbit);
+
+    try { stream >> std::get_time(&tm, "%b %d %Y %H:%M:%S"); }
+    catch (const std::ios::failure&) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    tm.tm_isdst = -1;
+    std::time_t time = std::mktime(&tm);
+    time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(hourOffset)).count();
+    time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes(minuteOffset)).count();
+
+    // check if the week day matches from the week day from the input string:
+    if (tm.tm_wday != std::distance(std::begin(DateTime::DAY_NAMES), it)) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    return DateTime(time);
 }
 
-DateTime DateTime::MaxDate() {
-    return DateTime(2147483647);
+std::optional<DateTime> DateTime::ParseDateFromUTCString(std::string_view str, const bool exceptions) {
+
+    const auto [hourOffset, minuteOffset] = DateTime::Now().GetTimezoneOffsetEx();
+
+    // check if the name of the week day is valid:
+    const std::string_view dayOfWeek = str.substr(0, 3);
+    const std::string_view* it = std::find(std::begin(DateTime::DAY_NAMES), std::end(DateTime::DAY_NAMES), dayOfWeek); // this is used later.
+    if (it == std::end(DateTime::DAY_NAMES)) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    str = str.substr(5);
+
+    // check if the month name is valid:
+    const std::string_view month = str.substr(3, 3);
+    if (std::find(std::begin(DateTime::MONTH_NAMES), std::end(DateTime::MONTH_NAMES), month) == std::end(DateTime::MONTH_NAMES)) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    // check if the timezone is GMT+0
+    if (str.substr(21) != "GMT") {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    // parse time and date:
+    std::tm tm = { 0 };
+    std::stringstream stream { std::string(str) };
+    stream.exceptions(std::ios::badbit | std::ios::failbit);
+
+    try { stream >> std::get_time(&tm, "%d %b %Y %H:%M:%S"); }
+    catch (const std::ios::failure&) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    tm.tm_isdst = -1;
+    std::time_t time = std::mktime(&tm);
+    time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(hourOffset)).count();
+    time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes(minuteOffset)).count();
+
+    // check if the week day matches from the week day from the input string:
+    if (tm.tm_wday != std::distance(std::begin(DateTime::DAY_NAMES), it)) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    return DateTime(time);
+}
+
+std::optional<DateTime> DateTime::ParseDateFromISO8601String(const std::string_view str, const bool exceptions) {
+
+    std::tm tm = { 0 };
+    std::stringstream stream { std::string(str) };
+    auto [hourOffset, minuteOffset] = DateTime::Now().GetTimezoneOffsetEx();
+
+    try {
+
+        stream >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
+
+        char ch = stream.get();
+        if ((ch != 'Z') && (ch != '+') && (ch != '-'))
+            throw std::runtime_error("bad timezone");
+
+        if (ch != 'Z') {
+
+            std::int32_t hours = 0, minutes = 0;
+            std::int32_t k = (ch == '+' ? -1 : 1);
+            stream >> hours >> ch >> minutes;
+
+            hourOffset += (hours * k);
+            minuteOffset += (minutes * k);
+
+        }
+
+    }
+    catch (const std::exception&) {
+        if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
+        return std::nullopt;
+    }
+
+    tm.tm_isdst = -1;
+    std::time_t time = std::mktime(&tm);
+    time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(hourOffset)).count();
+    time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes(minuteOffset)).count();
+
+    return DateTime(time);
+}
+
+DateTime DateTime::Parse(const std::string_view str) {
+    return DateTime::ParseDateFromString(str, true).value();
+}
+
+DateTime DateTime::ParseUTCDate(const std::string_view str) {
+    return DateTime::ParseDateFromUTCString(str, true).value();
+}
+
+DateTime DateTime::ParseISO8601Date(const std::string_view str) {
+    return DateTime::ParseDateFromISO8601String(str, true).value();
+}
+
+std::optional<DateTime> DateTime::TryParse(const std::string_view str) {
+    return DateTime::ParseDateFromString(str, false);
+}
+
+std::optional<DateTime> DateTime::TryParseUTCDate(const std::string_view str) {
+    return DateTime::ParseDateFromUTCString(str, false);
+}
+
+std::optional<DateTime> DateTime::TryParseISO8601Date(const std::string_view str) {
+    return DateTime::ParseDateFromISO8601String(str, false);
 }

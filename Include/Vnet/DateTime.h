@@ -14,6 +14,7 @@
 #include <chrono>
 #include <ctime>
 #include <utility>
+#include <optional>
 
 namespace Vnet {
 
@@ -22,6 +23,10 @@ namespace Vnet {
     private:
         static const std::string_view DAY_NAMES[];
         static const std::string_view MONTH_NAMES[];
+
+    public:
+        static const DateTime MIN_DATE;
+        static const DateTime MAX_DATE;
 
     private:
         std::time_t m_time;
@@ -98,8 +103,20 @@ namespace Vnet {
         std::string ToISO8601String(void) const;
 
         static DateTime Now(void);
-        static DateTime MinDate(void);
-        static DateTime MaxDate(void);
+
+    private:
+        static std::optional<DateTime> ParseDateFromString(std::string_view str, const bool exceptions);
+        static std::optional<DateTime> ParseDateFromUTCString(std::string_view str, const bool exceptions);
+        static std::optional<DateTime> ParseDateFromISO8601String(const std::string_view str, const bool exceptions);
+
+    public:
+        static DateTime Parse(const std::string_view str);
+        static DateTime ParseUTCDate(const std::string_view str);
+        static DateTime ParseISO8601Date(const std::string_view str);
+
+        static std::optional<DateTime> TryParse(const std::string_view str);
+        static std::optional<DateTime> TryParseUTCDate(const std::string_view str);
+        static std::optional<DateTime> TryParseISO8601Date(const std::string_view str);
 
     };
 
