@@ -6,6 +6,9 @@
 #include <Vnet/Http/HttpCookie.h>
 
 #include <sstream>
+#include <vector>
+#include <exception>
+#include <stdexcept>
 
 using namespace Vnet;
 using namespace Vnet::Http;
@@ -204,4 +207,115 @@ std::string HttpCookie::ToString() const {
         stream << "; HttpOnly";
 
     return stream.str();
+}
+
+void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attrib) {
+    
+    if (attrib.starts_with("Expires=")) {
+
+        const std::optional<DateTime> date = DateTime::TryParseUTCDate(attrib.substr(8));
+        if (!date.has_value()) 
+            throw std::runtime_error("'Expires' attribute: bad datetime format.");
+
+        cookie.SetExpirationDate(date);
+
+        return;
+    }
+
+    if (attrib.starts_with("Max-Age=")) {
+        
+        std::int32_t maxAge = 0;
+        try { maxAge = std::stoi(attrib.substr(8).data()); }
+        catch (const std::invalid_argument&) {
+            throw std::runtime_error("'Max-Age' attribute: invalid value.");
+        }
+        catch (const std::out_of_range&) {
+            throw std::runtime_error("'Max-Age' attribute: value out of range.");
+        }
+
+        cookie.SetMaxAge(maxAge);
+
+        return;
+    }
+
+    if (attrib.starts_with("Domain=")) {
+        cookie.SetDomain(attrib.substr(7));
+        return;
+    }
+
+    if (attrib.starts_with("Path=")) {
+        cookie.SetPath(attrib.substr(5));
+        return;
+    }
+
+    if (attrib.starts_with("SameSite=")) {
+        
+        attrib = attrib.substr(9);
+
+        if (attrib == "None") cookie.SetSameSite(SameSiteAttribute::NONE);
+        else if (attrib == "Lax") cookie.SetSameSite(SameSiteAttribute::LAX);
+        else if (attrib == "Strict") cookie.SetSameSite(SameSiteAttribute::STRICT);
+        else throw std::runtime_error("'SameSite' attribute: invalid value.");
+
+        return;
+    }
+
+    if (attrib == "Secure") {
+        cookie.SetSecure(true);
+        return;
+    }
+
+    if (attrib == "HttpOnly") {
+        cookie.SetHttpOnly(true);
+        return;
+    }
+
+    std::size_t pos = attrib.find('=');
+    if (pos != std::string_view::npos) 
+        attrib = attrib.substr(0, pos);
+
+    std::ostringstream stream;
+    stream << "'" << attrib << "' is not a valid attribute.";
+
+    throw std::runtime_error(stream.str());
+
+}
+
+std::optional<HttpCookie> HttpCookie::ParseCookie(std::string_view str, const bool exceptions) {
+
+    std::size_t pos = 0;
+    std::vector<std::string_view> v = { };
+
+    while ((pos = str.find("; ")) != std::string_view::npos) {
+        v.push_back(str.substr(0, pos));
+        str = str.substr(pos + 2);
+    }
+    v.push_back(str);
+
+    pos = v[0].find('=');
+    const std::string_view name = v[0].substr(0, pos);
+    const std::string_view value = v[0].substr(pos + 1);
+    // TODO: check if name and value are valid.
+
+    HttpCookie cookie = { name, value };
+
+    for (std::size_t i = 1; i < v.size(); ++i) {
+
+        try { HttpCookie::ParseCookieAttribute(cookie, v[i]); }
+        catch (const std::exception&) {
+            if (exceptions) throw std::runtime_error("Bad HTTP cookie.");
+            return std::nullopt;
+        }
+
+    }
+
+    return cookie;
+}
+
+HttpCookie HttpCookie::Parse(const std::string_view str) {
+    return HttpCookie::ParseCookie(str, true).value();
+}
+
+std::optional<HttpCookie> HttpCookie::TryParse(const std::string_view str) {
+    return HttpCookie::ParseCookie(str, false);
 }

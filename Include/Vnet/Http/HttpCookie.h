@@ -58,6 +58,14 @@ namespace Vnet::Http {
 
         std::string ToString(void) const;
 
+    private:
+        static void ParseCookieAttribute(HttpCookie& cookie, std::string_view attrib);
+        static std::optional<HttpCookie> ParseCookie(std::string_view str, const bool exceptions);
+
+    public:
+        static HttpCookie Parse(const std::string_view str);
+        static std::optional<HttpCookie> TryParse(const std::string_view str);
+
     };
 
 }
