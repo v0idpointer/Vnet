@@ -28,7 +28,6 @@ namespace Vnet {
 
     public:
         Uri(void);
-        Uri(const std::string_view uri);
         Uri(const Uri& uri);
         Uri(Uri&& uri) noexcept;
         virtual ~Uri(void);
@@ -36,10 +35,6 @@ namespace Vnet {
         Uri& operator= (const Uri& uri);
         Uri& operator= (Uri&& uri) noexcept;
         bool operator== (const Uri& uri) const;
-        
-    private:
-        static bool ContainsInvalidCharacters(const std::string_view uri);
-        void ParseUri(std::string_view uri);
 
     public:
         const std::optional<std::string>& GetScheme(void) const;
@@ -50,7 +45,23 @@ namespace Vnet {
         const std::optional<std::string>& GetQuery(void) const;
         const std::optional<std::string>& GetFragment(void) const;
 
+        bool IsAbsoluteUri(void) const;
+        bool IsRelativeUri(void) const;
+
         std::string ToString(void) const;
+
+    private:
+        static bool ContainsInvalidCharacters(const std::string_view uri);
+        static std::optional<Uri> ParseUri(std::string_view str, const bool exceptions);
+
+    public:
+        static Uri Parse(const std::string_view str);
+        static std::optional<Uri> TryParse(const std::string_view str);
+
+        static std::string Encode(const std::string_view str);
+        static std::string Encode(const std::string_view str, const bool encodePathDelimiters);
+        static std::string Decode(const std::string_view str);
+        static std::optional<std::string> TryDecode(const std::string_view str);
 
     };
 
