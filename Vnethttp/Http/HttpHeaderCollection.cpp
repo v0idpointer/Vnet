@@ -219,3 +219,43 @@ std::string HttpHeaderCollection::ToString() const {
 
     return str;
 }
+
+std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::string_view str, const bool exceptions) {
+
+    std::size_t pos = 0;
+    std::vector<std::string_view> v = { };
+
+    if (str.empty()) {
+        if (exceptions) throw std::invalid_argument("Empty string.");
+        return std::nullopt;
+    }
+
+    while ((pos = str.find("\r\n")) != std::string_view::npos) {
+        v.push_back(str.substr(0, pos));
+        str = str.substr(pos + 2);
+    }
+    v.push_back(str);
+
+    HttpHeaderCollection collection;
+    for (const std::string_view str : v) {
+
+        std::optional<HttpHeader> header = HttpHeader::TryParse(str);
+        if (!header.has_value()) {
+            if (exceptions) throw std::runtime_error("Bad HTTP header(s).");
+            return std::nullopt;
+        }
+
+        collection.Add(header.value(), true);
+
+    }
+
+    return collection;
+}
+
+HttpHeaderCollection HttpHeaderCollection::Parse(const std::string_view str) {
+    return HttpHeaderCollection::ParseHeaders(str, true).value();
+}
+
+std::optional<HttpHeaderCollection> HttpHeaderCollection::TryParse(const std::string_view str) {
+    return HttpHeaderCollection::ParseHeaders(str, false);
+}

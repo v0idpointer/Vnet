@@ -10,6 +10,7 @@
 
 #include <string>
 #include <string_view>
+#include <optional>
 
 namespace Vnet::Http {
     
@@ -37,6 +38,13 @@ namespace Vnet::Http {
         void SetValue(const std::string_view value);
 
         std::string ToString(void) const;
+
+    private:
+        static std::optional<HttpHeader> ParseHeader(std::string_view str, const bool exceptions);
+
+    public:
+        static HttpHeader Parse(const std::string_view str);
+        static std::optional<HttpHeader> TryParse(const std::string_view str);
 
     };
 

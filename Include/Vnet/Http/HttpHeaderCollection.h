@@ -62,6 +62,13 @@ namespace Vnet::Http {
 
         std::string ToString(void) const;
 
+    private:
+        static std::optional<HttpHeaderCollection> ParseHeaders(std::string_view str, const bool exceptions);
+
+    public:
+        static HttpHeaderCollection Parse(const std::string_view str);
+        static std::optional<HttpHeaderCollection> TryParse(const std::string_view str);
+
     };
 
 }
