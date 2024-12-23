@@ -215,7 +215,7 @@ std::string HttpHeaderCollection::ToString() const {
         stream << str << "\r\n";
 
     std::string str = stream.str();
-    str.erase(str.size() - 2);
+    if (!str.empty()) str.erase(str.size() - 2);
 
     return str;
 }
