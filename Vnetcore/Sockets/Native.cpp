@@ -153,6 +153,7 @@ void Native::NativeSockaddrToISocketAddress(const struct sockaddr* source, ISock
             pIpSockaddr->SetPort(SwapEndianness(pSockaddr->sin6_port));
         }
 
+        return;
     }
 
     throw std::invalid_argument("Unknown ISocketAddress implementation.");
