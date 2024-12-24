@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <exception>
+#include <stdexcept>
 
 using namespace Vnet::Http;
 
@@ -102,6 +104,9 @@ void HttpResponse::SetHeaders(HttpHeaderCollection&& headers) noexcept {
 
 void HttpResponse::SetPayload(const std::span<const std::uint8_t> payload) {
 
+    if (payload.empty())
+        throw std::invalid_argument("Empty payload buffer.");
+
     if (payload.size() > this->m_payload.size())
         this->ResizePayload(payload.size());
 
@@ -111,12 +116,14 @@ void HttpResponse::SetPayload(const std::span<const std::uint8_t> payload) {
 
 void HttpResponse::SetPayload(std::vector<std::uint8_t>&& payload) noexcept {
     this->m_payload = std::move(payload);
-    this->m_headers.Set("Content-Length", std::to_string(this->m_payload.size()));
+    if (this->m_payload.empty()) this->m_headers.Remove("Content-Length");
+    else this->m_headers.Set("Content-Length", std::to_string(this->m_payload.size()));
 }
 
 void HttpResponse::ResizePayload(const std::size_t size) {
     this->m_payload.resize(size);
-    this->m_headers.Set("Content-Length", std::to_string(size));
+    if (size == 0) this->m_headers.Remove("Content-Length");
+    else this->m_headers.Set("Content-Length", std::to_string(size));
 }
 
 void HttpResponse::DeletePayload() {
@@ -143,4 +150,17 @@ std::vector<std::uint8_t> HttpResponse::Serialize() const {
     std::memcpy(data.data(), stream.view().data(), stream.view().length());
 
     return data;
+}
+
+std::optional<HttpResponse> HttpResponse::ParseResponse(std::span<const std::uint8_t> data, const bool exceptions) {
+    if (exceptions) throw std::runtime_error("Not implemented.");
+    return std::nullopt;
+}
+
+HttpResponse HttpResponse::Parse(const std::span<const std::uint8_t> data) {
+    return HttpResponse::ParseResponse(data, true).value();
+}
+
+std::optional<HttpResponse> HttpResponse::TryParse(const std::span<const std::uint8_t> data) {
+    return HttpResponse::ParseResponse(data, false);
 }

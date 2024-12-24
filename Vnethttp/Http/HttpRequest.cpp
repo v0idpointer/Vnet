@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <exception>
+#include <stdexcept>
 
 using namespace Vnet;
 using namespace Vnet::Http;
@@ -123,6 +125,9 @@ void HttpRequest::SetHeaders(HttpHeaderCollection&& headers) noexcept {
 
 void HttpRequest::SetPayload(const std::span<const std::uint8_t> payload) {
     
+    if (payload.empty())
+        throw std::invalid_argument("Empty payload buffer.");
+
     if (payload.size() > this->m_payload.size())
         this->ResizePayload(payload.size());
 
@@ -132,12 +137,14 @@ void HttpRequest::SetPayload(const std::span<const std::uint8_t> payload) {
 
 void HttpRequest::SetPayload(std::vector<std::uint8_t>&& payload) noexcept {
     this->m_payload = std::move(payload);
-    this->m_headers.Set("Content-Length", std::to_string(this->m_payload.size()));
+    if (this->m_payload.empty()) this->m_headers.Remove("Content-Length");
+    else this->m_headers.Set("Content-Length", std::to_string(this->m_payload.size()));
 }
 
 void HttpRequest::ResizePayload(const std::size_t size) {
     this->m_payload.resize(size);
-    this->m_headers.Set("Content-Length", std::to_string(size));
+    if (size == 0) this->m_headers.Remove("Content-Length");
+    else this->m_headers.Set("Content-Length", std::to_string(size));
 }
 
 void HttpRequest::DeletePayload() {
@@ -171,4 +178,98 @@ std::vector<std::uint8_t> HttpRequest::Serialize() const {
     std::memcpy(data.data(), stream.view().data(), stream.view().length());
 
     return data;
+}
+
+std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_t> data, const bool exceptions) {
+
+    if (data.empty()) {
+        if (exceptions) throw std::invalid_argument("Empty buffer.");
+        return std::nullopt;
+    }
+
+    HttpRequest request;
+    std::string_view str = { reinterpret_cast<const char*>(data.data()), data.size() };
+
+    /* parse the first line of the request (method, uri and version) */
+
+    std::size_t lineEnd = str.find("\r\n");
+    if (lineEnd == std::string_view::npos) {
+        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        return std::nullopt;
+    }
+
+    // parse the method:
+    const std::size_t methodEnd = str.find(' ');
+    if ((methodEnd == std::string_view::npos) || (methodEnd >= lineEnd)) {
+        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        return std::nullopt;
+    }
+
+    HttpMethod method = { str.substr(0, methodEnd) };
+    request.SetMethod(std::move(method));
+    str = str.substr(methodEnd + 1);
+    lineEnd -= (request.GetMethod().GetName().length() + 1);
+
+    // parse the request uri:
+    const std::size_t uriEnd = str.find(' ');
+    if ((uriEnd == std::string_view::npos) || (uriEnd >= lineEnd)) {
+        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        return std::nullopt;
+    }
+
+    std::optional<Uri> uri = Uri::TryParse(str.substr(0, uriEnd));
+    if (!uri.has_value()) {
+        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        return std::nullopt;
+    }
+
+    request.SetRequestUri(std::move(uri.value()));
+    str = str.substr(uriEnd + 1);
+    lineEnd -= (uriEnd + 1);
+
+    // check if the version is http 1.0 or 1.1:
+    const std::string_view version = str.substr(0, lineEnd);
+    if ((version != "HTTP/1.0") && (version != "HTTP/1.1")) {
+        if (exceptions) throw std::runtime_error("Unsupported HTTP version.");
+        return std::nullopt;
+    }
+
+    str = str.substr(lineEnd + 2);
+    if (str.empty()) return request;
+
+    /* parse http headers */
+
+    const std::size_t headersEnd = str.find("\r\n\r\n");
+    if (headersEnd != std::string_view::npos) {
+
+        std::string_view headers = str.substr(0, headersEnd);
+        str = str.substr(headersEnd + 4); // +4 for CR LF CR LF
+
+        std::optional<HttpHeaderCollection> collection = HttpHeaderCollection::TryParse(headers);
+        if (!collection.has_value()) {
+            if (exceptions) throw std::runtime_error("Bad header(s) in HTTP request.");
+            return std::nullopt;
+        }
+
+        request.SetHeaders(std::move(collection.value()));
+
+    }
+
+    if (str.empty()) return request;
+
+    /* copy the payload */
+
+    std::vector<std::uint8_t> payload(str.length());
+    std::memcpy(payload.data(), str.data(), str.length());
+    request.m_payload = std::move(payload);
+
+    return request;
+}
+
+HttpRequest HttpRequest::Parse(const std::span<const std::uint8_t> data) {
+    return HttpRequest::ParseRequest(data, true).value();
+}
+
+std::optional<HttpRequest> HttpRequest::TryParse(const std::span<const std::uint8_t> data) {
+    return HttpRequest::ParseRequest(data, false);
 }

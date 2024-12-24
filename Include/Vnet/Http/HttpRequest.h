@@ -55,6 +55,13 @@ namespace Vnet::Http {
 
         std::vector<std::uint8_t> Serialize(void) const;
 
+    private:
+        static std::optional<HttpRequest> ParseRequest(std::span<const std::uint8_t> data, const bool exceptions);
+
+    public:
+        static HttpRequest Parse(const std::span<const std::uint8_t> data);
+        static std::optional<HttpRequest> TryParse(const std::span<const std::uint8_t> data);
+
     };
 
 }

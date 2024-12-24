@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <vector>
 #include <span>
+#include <optional>
 
 namespace Vnet::Http {
 
@@ -48,6 +49,13 @@ namespace Vnet::Http {
         void DeletePayload(void);
 
         std::vector<std::uint8_t> Serialize(void) const;
+
+    private:
+        static std::optional<HttpResponse> ParseResponse(std::span<const std::uint8_t> data, const bool exceptions);
+
+    public:
+        static HttpResponse Parse(const std::span<const std::uint8_t> data);
+        static std::optional<HttpResponse> TryParse(const std::span<const std::uint8_t> data);
 
     };
 
