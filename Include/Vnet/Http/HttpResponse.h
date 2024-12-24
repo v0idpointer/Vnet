@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <vector>
 #include <span>
-#include <optional>
 
 namespace Vnet::Http {
 

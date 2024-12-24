@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <cstdint>
+#include <optional>
 
 namespace Vnet::Http {
 
@@ -113,6 +114,13 @@ namespace Vnet::Http {
         const std::string& GetName(void) const;
 
         std::string ToString(void) const;
+
+    private:
+        static std::optional<HttpStatusCode> ParseStatusCode(std::string_view str, const bool exceptions);
+
+    public:
+        static HttpStatusCode Parse(const std::string_view str);
+        static std::optional<HttpStatusCode> TryParse(const std::string_view str);
 
     };
 

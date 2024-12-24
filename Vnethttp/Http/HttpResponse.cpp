@@ -153,8 +153,78 @@ std::vector<std::uint8_t> HttpResponse::Serialize() const {
 }
 
 std::optional<HttpResponse> HttpResponse::ParseResponse(std::span<const std::uint8_t> data, const bool exceptions) {
-    if (exceptions) throw std::runtime_error("Not implemented.");
-    return std::nullopt;
+    
+    if (data.empty()) {
+        if (exceptions) throw std::invalid_argument("Empty buffer.");
+        return std::nullopt;
+    }
+
+    HttpResponse response;
+    std::string_view str = { reinterpret_cast<const char*>(data.data()), data.size() };
+
+    /* parse the first line of the response (version and status) */
+
+    std::size_t lineEnd = str.find("\r\n");
+    if (lineEnd == std::string_view::npos) {
+        if (exceptions) throw std::runtime_error("Bad HTTP response.");
+        return std::nullopt;
+    }
+
+    const std::size_t versionEnd = str.find(' ');
+    if ((versionEnd == std::string_view::npos) || (versionEnd >= lineEnd)) {
+        if (exceptions) throw std::runtime_error("Bad HTTP response.");
+        return std::nullopt;
+    }
+
+    // check if the version is http 1.0 or 1.1:
+    const std::string_view version = str.substr(0, versionEnd);
+    if ((version != "HTTP/1.0") && (version != "HTTP/1.1")) {
+        if (exceptions) throw std::runtime_error("Unsupported HTTP version.");
+        return std::nullopt;
+    }
+
+    str = str.substr(versionEnd + 1);
+    lineEnd -= 9; // strlen("HTTP/1.1") + 1
+
+    // parse the status code:
+    std::optional<HttpStatusCode> statusCode = HttpStatusCode::TryParse(str.substr(0, lineEnd));
+    if (!statusCode.has_value()) {
+        if (exceptions) throw std::runtime_error("Bad HTTP response.");
+        return std::nullopt;
+    }
+
+    response.SetStatusCode(std::move(statusCode.value()));
+
+    str = str.substr(lineEnd + 2);
+    if (str.empty()) return response;
+
+    /* parse http headers */
+
+    const std::size_t headersEnd = str.find("\r\n\r\n");
+    if (headersEnd != std::string_view::npos) {
+
+        std::string_view headers = str.substr(0, headersEnd);
+        str = str.substr(headersEnd + 4); // +4 for CR LF CR LF
+
+        std::optional<HttpHeaderCollection> collection = HttpHeaderCollection::TryParse(headers);
+        if (!collection.has_value()) {
+            if (exceptions) throw std::runtime_error("Bad header(s) in HTTP response.");
+            return std::nullopt;
+        }
+
+        response.SetHeaders(std::move(collection.value()));
+
+    }
+
+    if (str.empty()) return response;
+
+    /* copy the payload */
+   
+    std::vector<std::uint8_t> payload(str.length());
+    std::memcpy(payload.data(), str.data(), str.length());
+    response.m_payload = std::move(payload);
+
+    return response;
 }
 
 HttpResponse HttpResponse::Parse(const std::span<const std::uint8_t> data) {

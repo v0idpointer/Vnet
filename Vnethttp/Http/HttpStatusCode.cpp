@@ -10,6 +10,8 @@
 #include <Vnet/Http/HttpStatusCode.h>
 
 #include <sstream>
+#include <exception>
+#include <stdexcept>
 
 using namespace Vnet::Http;
 
@@ -134,4 +136,50 @@ std::string HttpStatusCode::ToString() const {
     std::ostringstream stream;
     stream << this->GetCode() << " " << this->GetName();
     return stream.str();
+}
+
+std::optional<HttpStatusCode> HttpStatusCode::ParseStatusCode(std::string_view str, const bool exceptions) {
+
+    if (str.empty()) {
+        if (exceptions) throw std::invalid_argument("Empty string.");
+        return std::nullopt;
+    }
+
+    std::size_t pos = 0;
+    if ((pos = str.find(' ')) == std::string_view::npos) {
+        if (exceptions) throw std::runtime_error("Bad status code.");
+        return std::nullopt;
+    }
+
+    std::int32_t statusCode = 0;
+    try { statusCode = std::stoi(std::string(str.substr(0, pos))); }
+    catch (const std::invalid_argument& ex) {
+        if (exceptions) throw std::runtime_error("Bad status code.");
+        return std::nullopt;
+    }
+    catch (const std::out_of_range& ex) {
+        if (exceptions) throw std::runtime_error("Bad status code.");
+        return std::nullopt;
+    }
+
+    if (statusCode < 0) {
+        if (exceptions) throw std::runtime_error("Bad status code.");
+        return std::nullopt;
+    }
+    
+    const std::string_view text = str.substr(pos + 1);
+    if (text.empty()) {
+        if (exceptions) throw std::runtime_error("Bad status code.");
+        return std::nullopt;
+    }
+
+    return HttpStatusCode(statusCode, text);
+}
+
+HttpStatusCode HttpStatusCode::Parse(const std::string_view str) {
+    return HttpStatusCode::ParseStatusCode(str, true).value();
+}
+
+std::optional<HttpStatusCode> HttpStatusCode::TryParse(const std::string_view str) {
+    return HttpStatusCode::ParseStatusCode(str, false);
 }
