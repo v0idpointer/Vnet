@@ -9,7 +9,7 @@
 using namespace Vnet;
 using namespace Vnet::Sockets;
 
-IpSocketAddress::IpSocketAddress() : IpSocketAddress(IpAddress::Any(), 0) { }
+IpSocketAddress::IpSocketAddress() : IpSocketAddress(IpAddress::ANY, 0) { }
 
 IpSocketAddress::IpSocketAddress(const IpAddress& ipAddr, const Port port) {
     this->m_ipAddr = ipAddr;

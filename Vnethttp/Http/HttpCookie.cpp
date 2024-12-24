@@ -1,0 +1,321 @@
+/*
+    Vnet: Networking library for C++
+    Copyright (c) 2024 V0idPointer
+*/
+
+#include <Vnet/Http/HttpCookie.h>
+
+#include <sstream>
+#include <vector>
+#include <exception>
+#include <stdexcept>
+
+using namespace Vnet;
+using namespace Vnet::Http;
+
+HttpCookie::HttpCookie() : HttpCookie("", "") { }
+
+HttpCookie::HttpCookie(const std::string_view name, const std::string_view value) {
+
+    this->m_name = name;
+    this->m_value = value;
+    this->m_expirationDate = std::nullopt;
+    this->m_maxAge = std::nullopt;
+    this->m_domain = std::nullopt;
+    this->m_path = std::nullopt;
+    this->m_secure = std::nullopt;
+    this->m_httpOnly = std::nullopt;
+    this->m_sameSite = std::nullopt;
+
+}
+
+HttpCookie::HttpCookie(const HttpCookie& cookie) {
+    this->operator= (cookie);
+}
+
+HttpCookie::HttpCookie(HttpCookie&& cookie) noexcept {
+    this->operator= (std::move(cookie));
+}
+
+HttpCookie::~HttpCookie() { }
+
+HttpCookie& HttpCookie::operator= (const HttpCookie& cookie) {
+
+    if (this != &cookie) {
+        this->m_name = cookie.m_name;
+        this->m_value = cookie.m_value;
+        this->m_expirationDate = cookie.m_expirationDate;
+        this->m_maxAge = cookie.m_maxAge;
+        this->m_domain = cookie.m_domain;
+        this->m_path = cookie.m_path;
+        this->m_secure = cookie.m_secure;
+        this->m_httpOnly = cookie.m_httpOnly;
+        this->m_sameSite = cookie.m_sameSite;
+    }
+
+    return static_cast<HttpCookie&>(*this);
+}
+
+HttpCookie& HttpCookie::operator= (HttpCookie&& cookie) noexcept {
+
+    if (this != &cookie) {
+        this->m_name = std::move(cookie.m_name);
+        this->m_value = std::move(cookie.m_value);
+        this->m_expirationDate = cookie.m_expirationDate;
+        this->m_maxAge = cookie.m_maxAge;
+        this->m_domain = std::move(cookie.m_domain);
+        this->m_path = std::move(cookie.m_path);
+        this->m_secure = cookie.m_secure;
+        this->m_httpOnly = cookie.m_httpOnly;
+        this->m_sameSite = cookie.m_sameSite;
+    }
+
+    return static_cast<HttpCookie&>(*this);
+}
+
+bool HttpCookie::operator== (const HttpCookie& cookie) const {
+
+    if (this->m_name != cookie.m_name) return false;
+    if (this->m_value != cookie.m_value) return false;
+    if (this->m_expirationDate != cookie.m_expirationDate) return false;
+    if (this->m_maxAge != cookie.m_maxAge) return false;
+    if (this->m_domain != cookie.m_domain) return false;
+    if (this->m_path != cookie.m_path) return false;
+    if (this->m_secure != cookie.m_secure) return false;
+    if (this->m_httpOnly != cookie.m_httpOnly) return false;
+    if (this->m_sameSite != cookie.m_sameSite) return false;
+
+    return true;
+}
+
+const std::string& HttpCookie::GetName() const {
+    return this->m_name;
+}
+
+const std::string& HttpCookie::GetValue() const {
+    return this->m_value;
+}
+
+const std::optional<DateTime> HttpCookie::GetExpirationDate() const {
+    return this->m_expirationDate;
+}
+
+const std::optional<std::int32_t> HttpCookie::GetMaxAge() const {
+    return this->m_maxAge;
+}
+
+const std::optional<std::string>& HttpCookie::GetDomain() const {
+    return this->m_domain;
+}
+
+const std::optional<std::string>& HttpCookie::GetPath() const {
+    return this->m_path;
+}
+
+const std::optional<bool> HttpCookie::IsSecure() const {
+    return this->m_secure;
+}
+
+const std::optional<bool> HttpCookie::IsHttpOnly() const {
+    return this->m_httpOnly;
+}
+
+const std::optional<SameSiteAttribute> HttpCookie::GetSameSite() const {
+    return this->m_sameSite;
+}
+
+void HttpCookie::SetName(const std::string_view name) {
+    this->m_name = name;
+}
+
+void HttpCookie::SetValue(const std::string_view value) {
+    this->m_value = value;
+}
+
+void HttpCookie::SetExpirationDate(const std::optional<DateTime> expirationDate) {
+    this->m_expirationDate = expirationDate;
+}
+
+void HttpCookie::SetMaxAge(const std::optional<std::int32_t> maxAge) {
+    this->m_maxAge = maxAge;
+}
+
+void HttpCookie::SetDomain(const std::optional<std::string_view> domain) {
+    this->m_domain = domain;
+}
+
+void HttpCookie::SetPath(const std::optional<std::string_view> path) {
+    this->m_path = path;
+}
+
+void HttpCookie::SetSecure(const std::optional<bool> secure) {
+    this->m_secure = secure;
+}
+
+void HttpCookie::SetHttpOnly(const std::optional<bool> httpOnly) {
+    this->m_httpOnly = httpOnly;
+}
+
+void HttpCookie::SetSameSite(const std::optional<SameSiteAttribute> sameSite) {
+    this->m_sameSite = sameSite;
+}
+
+std::string HttpCookie::ToString() const {
+
+    std::ostringstream stream;
+
+    stream << this->m_name << "=" << this->m_value;
+
+    if (this->m_expirationDate.has_value()) 
+        stream << "; Expires=" << this->m_expirationDate->ToUTCString();
+
+    if (this->m_maxAge.has_value())
+        stream << "; Max-Age=" << this->m_maxAge.value();
+
+    if (this->m_domain.has_value())
+        stream << "; Domain=" << this->m_domain.value();
+
+    if (this->m_path.has_value())
+        stream << "; Path=" << this->m_path.value();
+
+    if (this->m_sameSite.has_value()) {
+
+        stream << "; SameSite=";
+
+        switch (this->m_sameSite.value()) {
+
+            case SameSiteAttribute::STRICT:
+                stream << "Strict";
+                break;
+
+            case SameSiteAttribute::LAX:
+                stream << "Lax";
+                break;
+
+            case SameSiteAttribute::NONE:
+                stream << "None";
+                break;
+
+        }
+
+    }
+
+    if (this->m_secure.value_or(false))
+        stream << "; Secure";
+
+    if (this->m_httpOnly.value_or(false))
+        stream << "; HttpOnly";
+
+    return stream.str();
+}
+
+void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attrib) {
+    
+    if (attrib.starts_with("Expires=")) {
+
+        const std::optional<DateTime> date = DateTime::TryParseUTCDate(attrib.substr(8));
+        if (!date.has_value()) 
+            throw std::runtime_error("'Expires' attribute: bad datetime format.");
+
+        cookie.SetExpirationDate(date);
+
+        return;
+    }
+
+    if (attrib.starts_with("Max-Age=")) {
+        
+        std::int32_t maxAge = 0;
+        try { maxAge = std::stoi(attrib.substr(8).data()); }
+        catch (const std::invalid_argument&) {
+            throw std::runtime_error("'Max-Age' attribute: invalid value.");
+        }
+        catch (const std::out_of_range&) {
+            throw std::runtime_error("'Max-Age' attribute: value out of range.");
+        }
+
+        cookie.SetMaxAge(maxAge);
+
+        return;
+    }
+
+    if (attrib.starts_with("Domain=")) {
+        cookie.SetDomain(attrib.substr(7));
+        return;
+    }
+
+    if (attrib.starts_with("Path=")) {
+        cookie.SetPath(attrib.substr(5));
+        return;
+    }
+
+    if (attrib.starts_with("SameSite=")) {
+        
+        attrib = attrib.substr(9);
+
+        if (attrib == "None") cookie.SetSameSite(SameSiteAttribute::NONE);
+        else if (attrib == "Lax") cookie.SetSameSite(SameSiteAttribute::LAX);
+        else if (attrib == "Strict") cookie.SetSameSite(SameSiteAttribute::STRICT);
+        else throw std::runtime_error("'SameSite' attribute: invalid value.");
+
+        return;
+    }
+
+    if (attrib == "Secure") {
+        cookie.SetSecure(true);
+        return;
+    }
+
+    if (attrib == "HttpOnly") {
+        cookie.SetHttpOnly(true);
+        return;
+    }
+
+    std::size_t pos = attrib.find('=');
+    if (pos != std::string_view::npos) 
+        attrib = attrib.substr(0, pos);
+
+    std::ostringstream stream;
+    stream << "'" << attrib << "' is not a valid attribute.";
+
+    throw std::runtime_error(stream.str());
+
+}
+
+std::optional<HttpCookie> HttpCookie::ParseCookie(std::string_view str, const bool exceptions) {
+
+    std::size_t pos = 0;
+    std::vector<std::string_view> v = { };
+
+    while ((pos = str.find("; ")) != std::string_view::npos) {
+        v.push_back(str.substr(0, pos));
+        str = str.substr(pos + 2);
+    }
+    v.push_back(str);
+
+    pos = v[0].find('=');
+    const std::string_view name = v[0].substr(0, pos);
+    const std::string_view value = v[0].substr(pos + 1);
+    // TODO: check if name and value are valid.
+
+    HttpCookie cookie = { name, value };
+
+    for (std::size_t i = 1; i < v.size(); ++i) {
+
+        try { HttpCookie::ParseCookieAttribute(cookie, v[i]); }
+        catch (const std::exception&) {
+            if (exceptions) throw std::runtime_error("Bad HTTP cookie.");
+            return std::nullopt;
+        }
+
+    }
+
+    return cookie;
+}
+
+HttpCookie HttpCookie::Parse(const std::string_view str) {
+    return HttpCookie::ParseCookie(str, true).value();
+}
+
+std::optional<HttpCookie> HttpCookie::TryParse(const std::string_view str) {
+    return HttpCookie::ParseCookie(str, false);
+}

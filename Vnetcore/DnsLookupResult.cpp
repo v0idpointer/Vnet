@@ -7,7 +7,7 @@
 
 using namespace Vnet;
 
-DnsLookupResult::DnsLookupResult() : DnsLookupResult("", { }) { }
+DnsLookupResult::DnsLookupResult() : DnsLookupResult("", std::vector<IpAddress>()) { }
 
 DnsLookupResult::DnsLookupResult(const std::string_view canonicalName, const IpAddress& address) 
     : DnsLookupResult(canonicalName, std::vector<IpAddress>{ address }) { }
