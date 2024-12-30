@@ -36,5 +36,10 @@ target("Vnetsec")
         add_linkdirs("C:/openssl")
     end
 
-    add_links("libcrypto.lib")
-    add_links("libssl.lib")
+    if is_plat("windows") then
+        add_links("libcrypto.lib")
+        add_links("libssl.lib")
+    else
+        add_links("crypto")
+        add_links("ssl")
+    end
