@@ -22,3 +22,19 @@ target("Vnethttp")
     add_includedirs("Include")
     add_includedirs("Vnethttp")
     add_defines("VNET_BUILD_VNETHTTP")
+
+target("Vnetsec")
+    set_kind("shared")
+    set_languages("cxx20")
+    add_files("Vnetsec/Security/*.cpp")
+    add_includedirs("Include")
+    add_includedirs("Vnetsec")
+    add_defines("VNET_BUILD_VNETSEC")
+
+    if is_plat("windows") then 
+        add_includedirs("C:/openssl/include") -- symlink if OpenSSL is installed somewhere else.
+        add_linkdirs("C:/openssl")
+    end
+
+    add_links("libcrypto.lib")
+    add_links("libssl.lib")
