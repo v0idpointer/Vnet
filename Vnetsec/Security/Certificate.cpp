@@ -7,11 +7,13 @@
 #include <Vnet/Security/SecurityException.h>
 
 #include <cstring>
+#include <sstream>
 
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/sha.h>
 
 using namespace Vnet;
 using namespace Vnet::Security;
@@ -120,20 +122,69 @@ static inline DateTime ToDateTime(ASN1_TIME* const time) noexcept {
 }
 
 DateTime Certificate::GetNotBefore() const {
+    
     if (this->m_cert == nullptr) throw std::runtime_error("Invalid certificate.");
+    
     ASN1_TIME* notBefore = X509_get_notBefore(this->m_cert);
+    if (notBefore == nullptr) throw SecurityException(ERR_get_error());
+
     return ToDateTime(notBefore);
 }
 
 DateTime Certificate::GetNotAfter() const {
+    
     if (this->m_cert == nullptr) throw std::runtime_error("Invalid certificate.");
+    
     ASN1_TIME* notAfter = X509_get_notAfter(this->m_cert);
+    if (notAfter == nullptr) throw SecurityException(ERR_get_error());
+
     return ToDateTime(notAfter);
 }
 
 std::int32_t Certificate::GetVersion() const {
     if (this->m_cert == nullptr) throw std::runtime_error("Invalid certificate.");
     return (X509_get_version(this->m_cert) + 1);
+}
+
+std::string Certificate::GetSerialNumber() const {
+
+    if (this->m_cert == nullptr) throw std::runtime_error("Invalid certificate.");
+
+    ASN1_INTEGER* serialNumber = X509_get_serialNumber(this->m_cert);
+    if (serialNumber == nullptr) throw SecurityException(ERR_get_error());
+    
+    BIGNUM* bn = ASN1_INTEGER_to_BN(serialNumber, nullptr);
+    if (bn == nullptr) throw SecurityException(ERR_get_error());
+
+    char* str = BN_bn2hex(bn);
+    std::string serialNumberStr = { str };
+
+    OPENSSL_free(str);
+    BN_free(bn);
+
+    return serialNumberStr;
+}
+
+std::string Certificate::GetThumbprint() const {
+
+    if (this->m_cert == nullptr) throw std::runtime_error("Invalid certificate.");
+
+    std::uint8_t digest[SHA_DIGEST_LENGTH] = { 0 };
+    std::uint32_t n = 0;
+
+    if (X509_digest(this->m_cert, EVP_sha1(), digest, &n) <= 0)
+        throw SecurityException(ERR_get_error());
+
+    std::ostringstream stream;
+    for (std::uint32_t i = 0; i < n; ++i)
+        stream << std::hex << std::uppercase << static_cast<std::int32_t>(digest[i]);
+
+    return stream.str();
+}
+
+bool Certificate::HasPrivateKey() const {
+    if (this->m_cert == nullptr) throw std::runtime_error("Invalid certificate.");
+    else return (this->m_privateKey != nullptr);
 }
 
 static inline std::int32_t StrLength(const char* str, const std::int32_t max) noexcept {

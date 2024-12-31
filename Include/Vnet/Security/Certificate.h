@@ -36,6 +36,10 @@ namespace Vnet::Security {
         DateTime GetNotBefore(void) const;
         DateTime GetNotAfter(void) const;
         std::int32_t GetVersion(void) const;
+        std::string GetSerialNumber(void) const;
+        std::string GetThumbprint(void) const;
+
+        bool HasPrivateKey(void) const;
 
     public:
         static Certificate LoadCertificateFromPEM(
