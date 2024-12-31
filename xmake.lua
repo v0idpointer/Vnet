@@ -30,6 +30,7 @@ target("Vnetsec")
     add_includedirs("Include")
     add_includedirs("Vnetsec")
     add_defines("VNET_BUILD_VNETSEC")
+    add_deps("Vnethttp")
 
     if is_plat("windows") then 
         add_includedirs("C:/openssl/include") -- symlink if OpenSSL is installed somewhere else.

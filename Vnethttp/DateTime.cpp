@@ -108,7 +108,6 @@ std::pair<std::int32_t, std::int32_t> DateTime::GetTimezoneOffsetEx() const {
 
     const std::chrono::zoned_time zt = { std::chrono::current_zone(), std::chrono::system_clock::from_time_t(this->m_time) };
     const std::chrono::sys_info info = zt.get_info();
-    const std::int32_t offset = std::chrono::duration_cast<std::chrono::minutes>(info.offset).count();
     const std::int32_t hourOffset = std::chrono::duration_cast<std::chrono::hours>(info.offset).count();
 	const std::int32_t minuteOffset = std::chrono::duration_cast<std::chrono::minutes>(info.offset % std::chrono::hours(1)).count();
 
