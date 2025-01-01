@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETCORE_SOCKETS_SOCKETFLAGS_H_
@@ -16,12 +16,12 @@ namespace Vnet::Sockets {
 
         NONE = 0,
 
-        OUT_OF_BAND,
-        PEEK,
-        DONT_ROUTE,
-        TRUNCATED,
-        CONTROL_DATA_TRUNCATED,
-        WAIT_ALL,
+        OUT_OF_BAND = 1,
+        PEEK = 2,
+        DONT_ROUTE = 4,
+        TRUNCATED = 8,
+        CONTROL_DATA_TRUNCATED = 16,
+        WAIT_ALL = 32,
 
     };
 
