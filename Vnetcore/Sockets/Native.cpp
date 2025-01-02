@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include "SocketsApi.h"
@@ -32,11 +32,11 @@ std::unordered_map<SocketType, std::int32_t> Native::s_socketTypes = {
 
 };
 
-std::unordered_map<ProtocolType, std::int32_t> Native::s_protocolTypes = { 
+std::unordered_map<Protocol, std::int32_t> Native::s_protocols = { 
 
-    { ProtocolType::UNSPECIFIED, NULL },
-    { ProtocolType::TCP, IPPROTO_TCP },
-    { ProtocolType::UDP, IPPROTO_UDP },
+    { Protocol::UNSPECIFIED, NULL },
+    { Protocol::TCP, IPPROTO_TCP },
+    { Protocol::UDP, IPPROTO_UDP },
 
 };
 
@@ -72,8 +72,8 @@ std::int32_t Native::ToNativeSocketType(const SocketType type) noexcept {
     else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
 }
 
-std::int32_t Native::ToNativeProtocolType(const ProtocolType proto) noexcept {
-    if (Native::s_protocolTypes.contains(proto)) return Native::s_protocolTypes.at(proto);
+std::int32_t Native::ToNativeProtocol(const Protocol proto) noexcept {
+    if (Native::s_protocols.contains(proto)) return Native::s_protocols.at(proto);
     else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
 }
 

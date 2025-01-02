@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETCORE_SOCKETS_NATIVE_H_
@@ -9,7 +9,7 @@
 #include <Vnet/IpAddress.h>
 #include <Vnet/Sockets/AddressFamily.h>
 #include <Vnet/Sockets/SocketType.h>
-#include <Vnet/Sockets/ProtocolType.h>
+#include <Vnet/Sockets/Protocol.h>
 #include <Vnet/Sockets/ISocketAddress.h>
 #include <Vnet/Sockets/SocketFlags.h>
 
@@ -28,7 +28,7 @@ namespace Vnet::Sockets {
     private:
         static std::unordered_map<AddressFamily, std::int32_t> s_addressFamilies;
         static std::unordered_map<SocketType, std::int32_t> s_socketTypes;
-        static std::unordered_map<ProtocolType, std::int32_t> s_protocolTypes;
+        static std::unordered_map<Protocol, std::int32_t> s_protocols;
         static std::unordered_map<SocketFlags, std::int32_t> s_socketFlags;
 
     public:
@@ -38,7 +38,7 @@ namespace Vnet::Sockets {
 
         static std::int32_t ToNativeAddressFamily(const AddressFamily af) noexcept;
         static std::int32_t ToNativeSocketType(const SocketType type) noexcept;
-        static std::int32_t ToNativeProtocolType(const ProtocolType proto) noexcept;
+        static std::int32_t ToNativeProtocol(const Protocol proto) noexcept;
         static std::int32_t ToNativeSocketFlags(const SocketFlags flags) noexcept;
 
         static IpAddress ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept;

@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETCORE_SOCKETS_SOCKET_H_
@@ -9,7 +9,7 @@
 #include <Vnet/Exports.h>
 #include <Vnet/Sockets/AddressFamily.h>
 #include <Vnet/Sockets/SocketType.h>
-#include <Vnet/Sockets/ProtocolType.h>
+#include <Vnet/Sockets/Protocol.h>
 #include <Vnet/Sockets/ShutdownSocket.h>
 #include <Vnet/Sockets/ISocketAddress.h>
 #include <Vnet/Sockets/SocketFlags.h>
@@ -33,15 +33,15 @@ namespace Vnet::Sockets {
     private:
         AddressFamily m_af;
         SocketType m_type;
-        ProtocolType m_proto;
+        Protocol m_proto;
         NativeSocket_t m_socket;
 
     private:
-        Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const ProtocolType proto);
+        Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto);
 
     public:
         Socket(void);
-        Socket(const AddressFamily af, const SocketType type, const ProtocolType proto);
+        Socket(const AddressFamily af, const SocketType type, const Protocol proto);
         Socket(const Socket&) = delete;
         Socket(Socket&& socket) noexcept;
         virtual ~Socket(void);
@@ -52,7 +52,7 @@ namespace Vnet::Sockets {
 
         AddressFamily GetAddressFamily(void) const;
 		SocketType GetSocketType(void) const;
-		ProtocolType GetProtocolType(void) const;
+		Protocol GetProtocol(void) const;
 		NativeSocket_t GetNativeSocketHandle(void) const;
 
         void Close(void);

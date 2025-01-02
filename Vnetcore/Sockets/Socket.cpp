@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Sockets/Socket.h>
@@ -11,20 +11,20 @@
 
 using namespace Vnet::Sockets;
 
-Socket::Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const ProtocolType proto)
+Socket::Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto)
     : m_socket(socket), m_af(af), m_type(type), m_proto(proto) { }
 
 Socket::Socket() 
-    : Socket(INVALID_SOCKET_HANDLE, static_cast<AddressFamily>(-1), static_cast<SocketType>(-1), static_cast<ProtocolType>(-1)) { }
+    : Socket(INVALID_SOCKET_HANDLE, static_cast<AddressFamily>(-1), static_cast<SocketType>(-1), static_cast<Protocol>(-1)) { }
 
-Socket::Socket(const AddressFamily af, const SocketType type, const ProtocolType proto)
+Socket::Socket(const AddressFamily af, const SocketType type, const Protocol proto)
     : Socket(INVALID_SOCKET_HANDLE, af, type, proto) {
 
     std::int32_t addressFamily = Native::ToNativeAddressFamily(af);
     std::int32_t socketType = Native::ToNativeSocketType(type);
-    std::int32_t protocolType = Native::ToNativeProtocolType(proto);
+    std::int32_t protocol = Native::ToNativeProtocol(proto);
 
-    this->m_socket = socket(addressFamily, socketType, protocolType);
+    this->m_socket = socket(addressFamily, socketType, protocol);
     if (this->m_socket == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
@@ -68,7 +68,7 @@ SocketType Socket::GetSocketType() const {
     return this->m_type;
 }
 
-ProtocolType Socket::GetProtocolType() const {
+Protocol Socket::GetProtocol() const {
     return this->m_proto;
 }
 
@@ -158,7 +158,7 @@ Socket Socket::Accept() const {
     if (client == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
-    return Socket(client, this->GetAddressFamily(), this->GetSocketType(), this->GetProtocolType());
+    return Socket(client, this->GetAddressFamily(), this->GetSocketType(), this->GetProtocol());
 }
 
 std::int32_t Socket::Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const {
