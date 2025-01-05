@@ -1,5 +1,5 @@
 -- Vnet: Networking library for C++
--- Copyright (c) 2024 V0idPointer
+-- Copyright (c) 2024-2025 V0idPointer
 
 target("Vnetcore")
     set_kind("shared")
@@ -26,6 +26,7 @@ target("Vnethttp")
 target("Vnetsec")
     set_kind("shared")
     set_languages("cxx20")
+    add_files("Vnetsec/Cryptography/*.cpp")
     add_files("Vnetsec/Security/*.cpp")
     add_includedirs("Include")
     add_includedirs("Vnetsec")

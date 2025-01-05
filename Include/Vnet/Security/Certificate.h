@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETSEC_SECURITY_CERTIFICATE_H_
@@ -13,6 +13,12 @@ struct evp_pkey_st;
 
 namespace Vnet::Security {
 
+    typedef x509_st* NativeCertificate_t;
+    constexpr NativeCertificate_t INVALID_CERTIFICATE_HANDLE = nullptr;
+
+    /**
+     * Represents an X.509 certificate.
+     */
     class VNETSECURITYAPI Certificate {
 
     private:
