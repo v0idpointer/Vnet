@@ -20,7 +20,27 @@ namespace Vnet::Cryptography {
     public:
         RSA(void) = delete;
 
+        /**
+         * Encrypts the input data.
+         * 
+         * @param key The RSA public/private key.
+         * @param data The data to encrypt.
+         * @returns The encrypted data.
+         * @exception std::invalid_argument - The provided key is not valid.
+         * @exception SecurityException - Encryption failed.
+         */
         static std::vector<std::uint8_t> Encrypt(const RsaKey& key, const std::span<const std::uint8_t> data);
+
+        /**
+         * Decrypts the input data.
+         * 
+         * @param privateKey The RSA private key.
+         * @param data The data to decrypt.
+         * @returns The decrypted data.
+         * @exception std::invalid_argument - The provided key is not valid, 
+         * or a public key is provided instead of a private key.
+         * @exception SecurityException - Decryption failed.
+         */
         static std::vector<std::uint8_t> Decrypt(const RsaKey& privateKey, const std::span<const std::uint8_t> encryptedData);
 
     };
