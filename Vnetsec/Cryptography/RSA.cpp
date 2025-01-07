@@ -15,7 +15,7 @@ using namespace Vnet::Security;
 
 std::vector<std::uint8_t> Vnet::Cryptography::RSA::Encrypt(const RsaKey& key, const std::span<const std::uint8_t> data) {
 
-    if (key.GetNativeKeyHandle() == nullptr)
+    if (key.GetNativeKeyHandle() == INVALID_KEY_HANDLE)
         throw std::invalid_argument("'key': Invalid key.");
 
     const ::RSA* rsa = EVP_PKEY_get0_RSA(key.GetNativeKeyHandle());
@@ -33,7 +33,7 @@ std::vector<std::uint8_t> Vnet::Cryptography::RSA::Encrypt(const RsaKey& key, co
 
 std::vector<std::uint8_t> Vnet::Cryptography::RSA::Decrypt(const RsaKey& privateKey, const std::span<const std::uint8_t> encryptedData) {
     
-    if (privateKey.GetNativeKeyHandle() == nullptr)
+    if (privateKey.GetNativeKeyHandle() == INVALID_KEY_HANDLE)
         throw std::invalid_argument("'privateKey': Invalid key.");
 
     if (!privateKey.IsPrivateKey())

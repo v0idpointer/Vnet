@@ -23,7 +23,7 @@ CryptoKey::CryptoKey(CryptoKey&& key) noexcept : CryptoKey(INVALID_KEY_HANDLE) {
 
 CryptoKey::~CryptoKey() {
 
-    if (this->m_key) {
+    if (this->m_key != INVALID_KEY_HANDLE) {
         EVP_PKEY_free(this->m_key);
         this->m_key = INVALID_KEY_HANDLE;
     }
@@ -34,7 +34,7 @@ CryptoKey& CryptoKey::operator= (CryptoKey&& key) noexcept {
 
     if (this != &key) {
 
-        if (this->m_key) {
+        if (this->m_key != INVALID_KEY_HANDLE) {
             EVP_PKEY_free(this->m_key);
             this->m_key = INVALID_KEY_HANDLE;
         }
