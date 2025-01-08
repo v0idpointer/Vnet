@@ -32,6 +32,7 @@ target("Vnetsec")
     add_includedirs("Include")
     add_includedirs("Vnetsec")
     add_defines("VNET_BUILD_VNETSEC")
+    add_deps("Vnetcore")
     add_deps("Vnethttp")
 
     if is_plat("windows") then 
