@@ -10,6 +10,7 @@
 #include <Vnet/Cryptography/CryptoKey.h>
 
 #include <functional>
+#include <memory>
 
 struct x509_st;
 
@@ -25,10 +26,10 @@ namespace Vnet::Cryptography::Certificates {
 
     private:
         NativeCertificate_t m_cert;
-        std::optional<CryptoKey> m_privateKey;
+        std::unique_ptr<CryptoKey> m_privateKey;
 
     private:
-        Certificate(NativeCertificate_t const cert, std::optional<CryptoKey>&& privateKey) noexcept;
+        Certificate(NativeCertificate_t const cert, std::unique_ptr<CryptoKey>&& privateKey) noexcept;
 
     public:
         Certificate(void);
@@ -109,7 +110,7 @@ namespace Vnet::Cryptography::Certificates {
          * 
          * @exception std::runtime_error - The certificate is not valid.
          */
-        const std::optional<CryptoKey>& GetPrivateKey(void) const;
+        const std::optional<std::reference_wrapper<const CryptoKey>> GetPrivateKey(void) const;
 
         /**
          * Returns the X.509 certificate's public key.
@@ -118,7 +119,7 @@ namespace Vnet::Cryptography::Certificates {
          * certificate's public key is of an unknown type.
          * @exception SecurityException
          */
-        CryptoKey GetPublicKey(void) const;
+        std::unique_ptr<CryptoKey> GetPublicKey(void) const;
 
         /**
          * Exports the X.509 certificate in PEM format.

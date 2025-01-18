@@ -25,6 +25,8 @@ namespace Vnet::Cryptography {
         virtual ~RsaKey(void);
 
         RsaKey& operator= (RsaKey&& key) noexcept;
+        bool operator== (const RsaKey& key) const;
+        virtual bool operator== (const CryptoKey& key) const override;
 
         /**
          * Derives the RSA public key from the RSA private key.

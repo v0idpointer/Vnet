@@ -4,7 +4,7 @@
 */
 
 #include <Vnet/Cryptography/Certificates/Certificate.h>
-#include <Vnet/Cryptography/RsaKey.h>
+#include <Vnet/Cryptography/KeyUtils.h>
 #include <Vnet/Security/SecurityException.h>
 
 #include <sstream>
@@ -19,12 +19,12 @@ using namespace Vnet::Cryptography;
 using namespace Vnet::Cryptography::Certificates;
 using namespace Vnet::Security;
 
-Certificate::Certificate(NativeCertificate_t const cert, std::optional<CryptoKey>&& privateKey) noexcept
+Certificate::Certificate(NativeCertificate_t const cert, std::unique_ptr<CryptoKey>&& privateKey) noexcept
     : m_cert(cert), m_privateKey(std::move(privateKey)) { }
 
-Certificate::Certificate() : Certificate(nullptr, std::nullopt) { }
+Certificate::Certificate() : Certificate(nullptr, nullptr) { }
 
-Certificate::Certificate(Certificate&& cert) noexcept : Certificate(nullptr, std::nullopt) {
+Certificate::Certificate(Certificate&& cert) noexcept : Certificate(nullptr, nullptr) {
     this->operator= (std::move(cert));
 }
 
@@ -190,18 +190,19 @@ bool Certificate::HasPrivateKey() const {
     if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
         throw std::runtime_error("Invalid certificate.");
 
-    return this->m_privateKey.has_value();
+    return (this->m_privateKey != nullptr);
 }
 
-const std::optional<CryptoKey>& Certificate::GetPrivateKey() const {
+const std::optional<std::reference_wrapper<const CryptoKey>> Certificate::GetPrivateKey() const {
 
     if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
         throw std::runtime_error("Invalid certificate.");
 
-    return this->m_privateKey;
+    if (this->m_privateKey) return std::cref(*this->m_privateKey);
+    else return std::nullopt;
 }
 
-CryptoKey Certificate::GetPublicKey() const {
+std::unique_ptr<CryptoKey> Certificate::GetPublicKey() const {
 
     if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
         throw std::runtime_error("Invalid certificate.");
@@ -231,14 +232,7 @@ CryptoKey Certificate::GetPublicKey() const {
     EVP_PKEY_free(publicKey);
     publicKey = nullptr;
 
-    // try to import the public key PEM into all Vnet-supported key types:
-    // this is horrible.
-
-    try { return RsaKey::ImportPEM(pem, std::nullopt); }
-    catch (const std::runtime_error&) { }
-    
-    // if all else fails, give up.
-    throw std::runtime_error("Unknown key type.");
+    return KeyUtils::ImportPEM(pem, std::nullopt);
 }
 
 std::string Certificate::ExportPEM() const {
@@ -264,14 +258,6 @@ std::string Certificate::ExportPEM() const {
     return pem;
 }
 
-static inline CryptoKey DuplicateKey(const CryptoKey& key) {
-
-    if (const RsaKey* rsaKey = dynamic_cast<const RsaKey*>(&key))
-        return RsaKey::ImportParameters(rsaKey->ExportParameters());
-
-    throw std::runtime_error("Unknown key type.");
-}
-
 Certificate Certificate::LoadCertificateFromPEM(const std::string_view certPem, const std::optional<std::reference_wrapper<CryptoKey>> privateKey) {
 
     if (certPem.empty())
@@ -294,10 +280,26 @@ Certificate Certificate::LoadCertificateFromPEM(const std::string_view certPem, 
     BIO_free(bio);
     bio = nullptr;
 
-    if (privateKey.has_value() && (X509_check_private_key(cert, privateKey->get().GetNativeKeyHandle()) != 1)) {
-        X509_free(cert);
-        throw SecurityException(-1, "Certificate and private key mismatch.");
+    std::unique_ptr<CryptoKey> key = nullptr;
+
+    if (privateKey.has_value()) {
+
+        if (X509_check_private_key(cert, privateKey->get().GetNativeKeyHandle()) != 1) {
+            X509_free(cert);
+            throw SecurityException(-1, "Certificate and private key mismatch.");
+        }
+
+        try { key = KeyUtils::DuplicateKey(privateKey->get()); }
+        catch (const std::invalid_argument&) {
+            X509_free(cert);
+            throw std::runtime_error("Unknown key type.");
+        }
+        catch (const SecurityException& ex) {
+            X509_free(cert);
+            throw ex;
+        }
+
     }
 
-    return { cert, DuplicateKey(privateKey->get()) };
+    return { cert, std::move(key) };
 }

@@ -29,6 +29,23 @@ RsaKey& RsaKey::operator= (RsaKey&& key) noexcept {
     return static_cast<RsaKey&>(*this);
 }
 
+bool RsaKey::operator== (const RsaKey& key) const {
+
+    if ((this->GetNativeKeyHandle() == INVALID_KEY_HANDLE) && (key.GetNativeKeyHandle() == INVALID_KEY_HANDLE))
+        return true;
+
+    return (CryptoKey::operator== (key) && (this->IsPrivateKey() == key.IsPrivateKey()));
+}
+
+bool RsaKey::operator== (const CryptoKey& key) const {
+
+    const RsaKey* pKey = nullptr;
+    if ((pKey = dynamic_cast<const RsaKey*>(&key)) == nullptr)
+        return false;
+
+    return RsaKey::operator== (static_cast<const RsaKey&>(*pKey));
+}
+
 RsaKey RsaKey::DerivePublicKey() const {
 
     if (this->GetNativeKeyHandle() == INVALID_KEY_HANDLE)
@@ -129,19 +146,6 @@ std::string RsaKey::ExportPEM(const std::optional<std::string_view> password) co
     else return CryptoKey::ExportPrivateKeyToPEM(this->GetNativeKeyHandle(), password);
 }
 
-static inline void FreeParams(BIGNUM* n, BIGNUM* e, BIGNUM* d, BIGNUM* p, BIGNUM* q, BIGNUM* dmp1, BIGNUM* dmp2, BIGNUM* iqmp) {
-    
-    if (n != nullptr) BN_free(n);
-    if (e != nullptr) BN_free(e);
-    if (d != nullptr) BN_free(d);
-    if (p != nullptr) BN_free(p);
-    if (q != nullptr) BN_free(q);
-    if (dmp1 != nullptr) BN_free(dmp1);
-    if (dmp2 != nullptr) BN_free(dmp2);
-    if (iqmp != nullptr) BN_free(iqmp);
-
-}
-
 RsaKey RsaKey::ImportParameters(const RsaKeyParameters& params) {
 
     RSA* rsa = RSA_new();
@@ -157,23 +161,9 @@ RsaKey RsaKey::ImportParameters(const RsaKeyParameters& params) {
     dmp2 = VectorToBignum(params.Exponent2);
     iqmp = VectorToBignum(params.Coefficient);
 
-    if (RSA_set0_key(rsa, n, e, d) != 1) {
-        RSA_free(rsa);
-        FreeParams(n, e, d, p, q, dmp1, dmp2, iqmp);
-        throw SecurityException(ERR_get_error());
-    }
-
-    if (RSA_set0_factors(rsa, p, q) != 1) {
-        RSA_free(rsa);
-        FreeParams(n, e, d, p, q, dmp1, dmp2, iqmp);
-        throw SecurityException(ERR_get_error());
-    }
-
-    if (RSA_set0_crt_params(rsa, dmp1, dmp2, iqmp) != 1) {
-        RSA_free(rsa);
-        FreeParams(n, e, d, p, q, dmp1, dmp2, iqmp);
-        throw SecurityException(ERR_get_error());
-    }
+    RSA_set0_key(rsa, n, e, d);
+    RSA_set0_factors(rsa, p, q);
+    RSA_set0_crt_params(rsa, dmp1, dmp2, iqmp);
 
     EVP_PKEY* key = EVP_PKEY_new();
     if (key == nullptr) {

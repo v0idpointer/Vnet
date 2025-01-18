@@ -21,15 +21,6 @@ CryptoKey::CryptoKey(CryptoKey&& key) noexcept : CryptoKey(INVALID_KEY_HANDLE) {
     this->operator= (std::move(key));
 }
 
-CryptoKey::~CryptoKey() {
-
-    if (this->m_key != INVALID_KEY_HANDLE) {
-        EVP_PKEY_free(this->m_key);
-        this->m_key = INVALID_KEY_HANDLE;
-    }
-
-}
-
 CryptoKey& CryptoKey::operator= (CryptoKey&& key) noexcept {
 
     if (this != &key) {
@@ -45,6 +36,15 @@ CryptoKey& CryptoKey::operator= (CryptoKey&& key) noexcept {
     }
 
     return static_cast<CryptoKey&>(*this);
+}
+
+CryptoKey::~CryptoKey() {
+
+    if (this->m_key != INVALID_KEY_HANDLE) {
+        EVP_PKEY_free(this->m_key);
+        this->m_key = INVALID_KEY_HANDLE;
+    }
+
 }
 
 bool CryptoKey::operator== (const CryptoKey& key) const {

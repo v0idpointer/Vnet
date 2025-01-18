@@ -29,15 +29,16 @@ namespace Vnet::Cryptography {
 
     protected:
         CryptoKey(NativeCryptoKey_t const key);
+        CryptoKey(CryptoKey&& key) noexcept;
+
+        CryptoKey& operator= (CryptoKey&& key) noexcept;
 
     public:
         CryptoKey(const CryptoKey&) = delete;
-        CryptoKey(CryptoKey&& key) noexcept;
         virtual ~CryptoKey(void);
 
         CryptoKey& operator= (const CryptoKey&) = delete;
-        CryptoKey& operator= (CryptoKey&& key) noexcept;
-        bool operator== (const CryptoKey& key) const;
+        virtual bool operator== (const CryptoKey& key) const;
 
         NativeCryptoKey_t GetNativeKeyHandle(void) const;
 
