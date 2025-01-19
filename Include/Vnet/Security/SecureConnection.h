@@ -29,6 +29,7 @@ namespace Vnet::Security {
         SecureConnection(NativeSecureConnection_t const ssl);
 
     public:
+        SecureConnection(void);
         SecureConnection(const SecureConnection&) = delete;
         SecureConnection(SecureConnection&& conn) noexcept;
         virtual ~SecureConnection(void);
@@ -38,6 +39,8 @@ namespace Vnet::Security {
 
         NativeSecureConnection_t GetNativeSecureConnectionHandle(void) const;
 
+        std::int32_t GetAvailableBytes(void) const;
+
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
         std::int32_t Send(const std::span<const std::uint8_t> data) const;
         
@@ -46,11 +49,15 @@ namespace Vnet::Security {
 
         void Close(void);
 
+    private:
+        static NativeSecureConnection_t CreateConnection(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
+
+    public:
         static SecureConnection Connect(const SecurityContext& ctx, const Sockets::Socket& socket);
         static SecureConnection Connect(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
 
-        // static SecureConnection Accept(const Sockets::Socket& socket);
-        // static SecureConnection Accept(const Sockets::NativeSocket_t socket);
+        static SecureConnection Accept(const SecurityContext& ctx, const Sockets::Socket& socket);
+        static SecureConnection Accept(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
 
     };
 

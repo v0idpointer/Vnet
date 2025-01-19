@@ -258,7 +258,7 @@ std::string Certificate::ExportPEM() const {
     return pem;
 }
 
-Certificate Certificate::LoadCertificateFromPEM(const std::string_view certPem, const std::optional<std::reference_wrapper<CryptoKey>> privateKey) {
+Certificate Certificate::LoadCertificateFromPEM(const std::string_view certPem, const std::optional<std::reference_wrapper<const CryptoKey>> privateKey) {
 
     if (certPem.empty())
         throw std::invalid_argument("'certPem': Empty string.");

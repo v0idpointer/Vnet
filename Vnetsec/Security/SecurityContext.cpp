@@ -6,14 +6,20 @@
 #include <Vnet/Security/SecurityContext.h>
 #include <Vnet/Security/SecurityException.h>
 
+#include <Vnet/Cryptography/KeyUtils.h>
+#include <Vnet/Cryptography/CryptoKey.h>
+#include <Vnet/Cryptography/Certificates/Certificate.h>
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
 using namespace Vnet::Security;
+using namespace Vnet::Cryptography;
+using namespace Vnet::Cryptography::Certificates;
 
-SecurityContext::SecurityContext() : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE) { }
+SecurityContext::SecurityContext() : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE), m_cert(nullptr), m_privateKey(nullptr) { }
 
-SecurityContext::SecurityContext(const ApplicationType appType, const SecurityProtocol protocol) : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE) {
+SecurityContext::SecurityContext(const ApplicationType appType, const SecurityProtocol protocol) : SecurityContext() {
 
     const SSL_METHOD* method = nullptr;
     if (appType == ApplicationType::CLIENT) method = SSLv23_client_method();
@@ -38,7 +44,7 @@ SecurityContext::SecurityContext(const ApplicationType appType, const SecurityPr
 
 }
 
-SecurityContext::SecurityContext(SecurityContext&& ctx) noexcept : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE) {
+SecurityContext::SecurityContext(SecurityContext&& ctx) noexcept : SecurityContext() {
     this->operator= (std::move(ctx));
 }
 
@@ -63,6 +69,9 @@ SecurityContext& SecurityContext::operator= (SecurityContext&& ctx) noexcept {
         this->m_ctx = ctx.m_ctx;
         ctx.m_ctx = INVALID_SECURITY_CONTEXT_HANDLE;
 
+        this->m_cert = std::move(ctx.m_cert);
+        this->m_privateKey = std::move(ctx.m_privateKey);
+
     }
 
     return static_cast<SecurityContext&>(*this);
@@ -70,4 +79,74 @@ SecurityContext& SecurityContext::operator= (SecurityContext&& ctx) noexcept {
 
 NativeSecurityContext_t SecurityContext::GetNativeSecurityContextHandle() const {
     return this->m_ctx;
+}
+
+const std::optional<std::reference_wrapper<const Certificate>> SecurityContext::GetCertificate() const {
+
+    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
+        throw std::runtime_error("Invalid security context.");
+
+    if (this->m_cert) return std::cref(*this->m_cert);
+    else return std::nullopt;
+}
+
+const std::optional<std::reference_wrapper<const CryptoKey>> SecurityContext::GetPrivateKey() const {
+
+    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
+        throw std::runtime_error("Invalid security context.");
+
+    if (this->m_privateKey) return std::cref(*this->m_privateKey);
+    else return std::nullopt;
+}
+
+static inline std::unique_ptr<Certificate> DuplicateCertificate(const Certificate& cert) {
+
+    std::optional<std::reference_wrapper<const CryptoKey>> privateKey = std::nullopt;
+    if (cert.HasPrivateKey()) privateKey = std::cref(*cert.GetPrivateKey());
+
+    return std::make_unique<Certificate>(Certificate::LoadCertificateFromPEM(cert.ExportPEM(), privateKey));
+}
+
+void SecurityContext::SetCertificate(const std::optional<std::reference_wrapper<const Certificate>> cert) {
+
+    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
+        throw std::runtime_error("Invalid security context.");
+
+    if (!cert.has_value()) throw std::invalid_argument("'cert': std::nullopt");
+    else {
+
+        if (cert->get().GetNativeCertificateHandle() == INVALID_CERTIFICATE_HANDLE)
+            throw std::invalid_argument("'cert': Invalid certificate.");
+
+        this->m_cert = DuplicateCertificate(cert->get());
+        if (this->m_cert->HasPrivateKey())
+            this->SetPrivateKey(this->m_cert->GetPrivateKey());
+
+    }
+
+    NativeCertificate_t certHandle = (this->m_cert ? this->m_cert->GetNativeCertificateHandle() : nullptr);
+    if (SSL_CTX_use_certificate(this->m_ctx, certHandle) != 1)
+        throw SecurityException(ERR_get_error());
+
+}
+
+void SecurityContext::SetPrivateKey(const std::optional<std::reference_wrapper<const CryptoKey>> privateKey) {
+
+    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
+        throw std::runtime_error("Invalid security context.");
+
+    if (!privateKey.has_value()) throw std::invalid_argument("'privateKey': std::nullopt"); // OpenSSL for some fucking reason doesn't allow
+    else {                                                                                  // you to remove an EVP_PKEY from an SSL_CTX ???
+
+        if (privateKey->get().GetNativeKeyHandle() == INVALID_KEY_HANDLE)
+            throw std::invalid_argument("'privateKey': Invalid key.");
+
+        this->m_privateKey = KeyUtils::DuplicateKey(privateKey->get());
+
+    }
+
+    NativeCryptoKey_t keyHandle = (this->m_privateKey ? this->m_privateKey->GetNativeKeyHandle() : nullptr);
+    if (SSL_CTX_use_PrivateKey(this->m_ctx, keyHandle) != 1)
+        throw SecurityException(ERR_get_error());
+
 }

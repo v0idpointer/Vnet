@@ -142,7 +142,7 @@ namespace Vnet::Cryptography::Certificates {
          * @exception SecurityException - Certificate import failed, or the provided private key
          * does not correspond to the X.509 certificate.
          */
-        static Certificate LoadCertificateFromPEM(const std::string_view certPem, const std::optional<std::reference_wrapper<CryptoKey>> privateKey);
+        static Certificate LoadCertificateFromPEM(const std::string_view certPem, const std::optional<std::reference_wrapper<const CryptoKey>> privateKey);
 
     };
 
