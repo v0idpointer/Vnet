@@ -29,7 +29,7 @@ namespace Vnet::Sockets {
         return static_cast<SocketFlags>(static_cast<std::int32_t>(lhs) | static_cast<std::int32_t>(rhs));
     }
 
-    static inline SocketFlags operator|= (SocketFlags& lhs, const SocketFlags rhs) noexcept {
+    static inline SocketFlags& operator|= (SocketFlags& lhs, const SocketFlags rhs) noexcept {
         lhs = (lhs | rhs);
         return lhs;
     }
@@ -38,7 +38,7 @@ namespace Vnet::Sockets {
         return static_cast<SocketFlags>(static_cast<std::int32_t>(lhs) & static_cast<std::int32_t>(rhs));
     }
 
-    static inline SocketFlags operator&= (SocketFlags& lhs, const SocketFlags rhs) noexcept {
+    static inline SocketFlags& operator&= (SocketFlags& lhs, const SocketFlags rhs) noexcept {
         lhs = (lhs & rhs);
         return lhs;
     }

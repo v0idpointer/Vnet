@@ -7,6 +7,8 @@
 #define _VNETSEC_SECURITY_SECURECONNECTION_H_
 
 #include <Vnet/Security/SecurityContext.h>
+#include <Vnet/Security/ConnectFlags.h>
+#include <Vnet/Security/AcceptFlags.h>
 #include <Vnet/Sockets/Socket.h>
 
 struct ssl_st;

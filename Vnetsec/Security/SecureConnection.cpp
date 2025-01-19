@@ -8,6 +8,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
 using namespace Vnet::Security;
 using namespace Vnet::Sockets;
@@ -167,7 +168,13 @@ SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const Nati
 
     NativeSecureConnection_t ssl = SecureConnection::CreateConnection(ctx, socket);
 
-    // SSL_set_verify(ssl, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+    std::uint8_t sessionId[32] = { 0 };
+    RAND_bytes(sessionId, sizeof(sessionId));
+
+    if (SSL_set_session_id_context(ssl, sessionId, sizeof(sessionId)) != 1) {
+        SSL_free(ssl);
+        throw SecurityException(ERR_get_error());
+    }
 
     if (SSL_accept(ssl) != 1) {
         SSL_free(ssl);
