@@ -5,13 +5,16 @@
 
 #include <Vnet/Security/SecureConnection.h>
 #include <Vnet/Security/SecurityException.h>
+#include <Vnet/Cryptography/Certificates/Certificate.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/x509.h>
 
 using namespace Vnet::Security;
 using namespace Vnet::Sockets;
+using namespace Vnet::Cryptography::Certificates;
 
 SecureConnection::SecureConnection(NativeSecureConnection_t const ssl) : m_ssl(ssl) { }
 
@@ -51,6 +54,67 @@ NativeSecureConnection_t SecureConnection::GetNativeSecureConnectionHandle() con
     return this->m_ssl;
 }
 
+std::optional<Certificate> SecureConnection::GetCertificate() const {
+
+    if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
+        throw std::runtime_error("Invalid secure connection.");
+
+    X509* cert = SSL_get_certificate(this->m_ssl);
+    if (cert == nullptr) return std::nullopt;
+
+    BIO* bio = BIO_new(BIO_s_mem());
+    if (bio == nullptr) 
+        throw SecurityException(ERR_get_error());
+
+    if (PEM_write_bio_X509(bio, cert) != 1) {
+        BIO_free(bio);
+        throw SecurityException(ERR_get_error());
+    }
+
+    const char* str = nullptr;
+    std::size_t len = BIO_get_mem_data(bio, &str);
+    std::string pem = { str, len };
+
+    BIO_free(bio);
+    bio = nullptr;
+    cert = nullptr;
+
+    return Certificate::LoadCertificateFromPEM(pem, std::nullopt);
+}
+
+std::optional<Certificate> SecureConnection::GetPeerCertificate() const {
+    
+    if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
+        throw std::runtime_error("Invalid secure connection.");
+
+    X509* cert = SSL_get_peer_certificate(this->m_ssl);
+    if (cert == nullptr) return std::nullopt;
+
+    BIO* bio = BIO_new(BIO_s_mem());
+    if (bio == nullptr) {
+        X509_free(cert);
+        throw SecurityException(ERR_get_error());
+    }
+
+    if (PEM_write_bio_X509(bio, cert) != 1) {
+        BIO_free(bio);
+        X509_free(cert);
+        throw SecurityException(ERR_get_error());
+    }
+
+    const char* str = nullptr;
+    std::size_t len = BIO_get_mem_data(bio, &str);
+    std::string pem = { str, len };
+
+    BIO_free(bio);
+    bio = nullptr;
+
+    X509_free(cert);
+    cert = nullptr;
+
+    return Certificate::LoadCertificateFromPEM(pem, std::nullopt);
+}
+
 std::int32_t SecureConnection::GetAvailableBytes() const {
     
     if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
@@ -61,14 +125,17 @@ std::int32_t SecureConnection::GetAvailableBytes() const {
     return SSL_pending(this->m_ssl);
 }
 
-std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const {
+std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const {
 
     if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
         throw std::runtime_error("Invalid secure connection.");
 
+    if (flags != SocketFlags::NONE)
+        throw std::invalid_argument("'flags': This value must be SocketFlags::NONE.");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
-    if (size < 0) throw std::out_of_range("'size' is less that zero.");
+    if (size < 0) throw std::out_of_range("'size' is less than zero.");
     if (size > (data.size() - offset)) throw std::out_of_range("'size' is greater than the buffer size minus 'offset'.");
 
     const char* const buffer = reinterpret_cast<const char*>(data.data() + offset);
@@ -79,30 +146,51 @@ std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data, co
     return sent;
 }
 
-std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data) const {
-    return this->Send(data, 0, data.size());
+std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const {
+    return this->Send(data, offset, size, SocketFlags::NONE);
 }
 
-std::int32_t SecureConnection::Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const {
+std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data, const SocketFlags flags) const {
+    return this->Send(data, 0, data.size(), flags);
+}
+
+std::int32_t SecureConnection::Send(const std::span<const std::uint8_t> data) const {
+    return this->Send(data, 0, data.size(), SocketFlags::NONE);
+}
+
+std::int32_t SecureConnection::Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const {
 
     if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
         throw std::runtime_error("Invalid secure connection.");
 
+    if ((flags != SocketFlags::NONE) && (flags != SocketFlags::PEEK))
+        throw std::invalid_argument("'flags': This value must be SocketFlags::NONE or SocketFlags::PEEK.");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
-    if (size < 0) throw std::out_of_range("'size' is less that zero.");
+    if (size < 0) throw std::out_of_range("'size' is less than zero.");
     if (size > (data.size() - offset)) throw std::out_of_range("'size' is greater than the buffer size minus 'offset'.");
 
     char* const buffer = reinterpret_cast<char*>(data.data() + offset);
 
-    std::int32_t read = SSL_read(this->m_ssl, buffer, size);
+    int (*const pfnRead)(SSL*, void*, int) = ( (flags == SocketFlags::NONE) ? &SSL_read : &SSL_peek );
+
+    std::int32_t read = pfnRead(this->m_ssl, buffer, size);
     if (read <= 0) throw SecurityException(ERR_get_error());
 
     return read;
 }
 
+std::int32_t SecureConnection::Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const {
+    return this->Receive(data, offset, size, SocketFlags::NONE);
+}
+
+std::int32_t SecureConnection::Receive(const std::span<std::uint8_t> data, const SocketFlags flags) const {
+    return this->Receive(data, 0, data.size(), flags);
+}
+
 std::int32_t SecureConnection::Receive(const std::span<std::uint8_t> data) const {
-    return this->Receive(data, 0, data.size());
+    return this->Receive(data, 0, data.size(), SocketFlags::NONE);
 }
 
 void SecureConnection::Close() {
