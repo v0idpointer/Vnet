@@ -29,7 +29,7 @@ namespace Vnet::Security {
     constexpr NativeSecurityContext_t INVALID_SECURITY_CONTEXT_HANDLE = nullptr;
 
     /**
-     * 
+     * Stores configuration used for the creation of secure connections.
      */
     class VNETSECURITYAPI SecurityContext {
 

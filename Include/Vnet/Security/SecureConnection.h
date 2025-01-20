@@ -52,6 +52,14 @@ namespace Vnet::Security {
         NativeSecureConnection_t GetNativeSecureConnectionHandle(void) const;
 
         /**
+         * Returns the security protocol used in the secure connection.
+         * 
+         * @returns A value from the SecurityProtocol enum.
+         * @exception std::runtime_error - The secure connection is not valid.
+         */
+        SecurityProtocol GetSecurityProtocol(void) const;
+
+        /**
          * Returns the local X.509 certificate.
          * 
          * @returns An optional X.509 certificate.
@@ -77,7 +85,7 @@ namespace Vnet::Security {
         std::int32_t GetAvailableBytes(void) const;
 
         /**
-         * Sends data over a secure connection.
+         * Sends data over the secure connection.
          * 
          * @param data Data to be sent.
          * @param offset The position in the data buffer from where to start sending.
@@ -94,7 +102,7 @@ namespace Vnet::Security {
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Sockets::SocketFlags flags) const;
 
         /**
-         * Sends data over a secure connection.
+         * Sends data over the secure connection.
          * 
          * @param data Data to be sent.
          * @param offset The position in the data buffer from where to start sending.
@@ -109,7 +117,7 @@ namespace Vnet::Security {
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
 
         /**
-         * Sends data over a secure connection.
+         * Sends data over the secure connection.
          * 
          * @param data Data to be sent.
          * @param flags Socket flags. This value must be SocketFlags::NONE.
@@ -121,7 +129,7 @@ namespace Vnet::Security {
         std::int32_t Send(const std::span<const std::uint8_t> data, const Sockets::SocketFlags flags) const;
 
         /**
-         * Sends data over a secure connection.
+         * Sends data over the secure connection.
          * 
          * @param data Data to be sent.
          * @returns The number of bytes sent.
@@ -131,7 +139,7 @@ namespace Vnet::Security {
         std::int32_t Send(const std::span<const std::uint8_t> data) const;
         
         /**
-         * Reads data from a secure connection.
+         * Reads data from the secure connection.
          * 
          * @param data Buffer where the read data will be stored.
          * @param offset The position in the data buffer where to store the read data.
@@ -148,7 +156,7 @@ namespace Vnet::Security {
         std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Sockets::SocketFlags flags) const;
 
         /**
-         * Reads data from a secure connection.
+         * Reads data from the secure connection.
          * 
          * @param data Buffer where the read data will be stored.
          * @param offset The position in the data buffer where to store the read data.
@@ -163,7 +171,7 @@ namespace Vnet::Security {
         std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
 
         /**
-         * Reads data from a secure connection.
+         * Reads data from the secure connection.
          * 
          * @param data Buffer where the read data will be stored.
          * @param flags Socket flags. This can be SocketFlags::NONE or SocketFlags::PEEK.
@@ -175,7 +183,7 @@ namespace Vnet::Security {
         std::int32_t Receive(const std::span<std::uint8_t> data, const Sockets::SocketFlags flags) const;
 
         /**
-         * Reads data from a secure connection.
+         * Reads data from the secure connection.
          * 
          * @param data Buffer where the read data will be stored.
          * @returns The number of bytes read.
@@ -199,11 +207,122 @@ namespace Vnet::Security {
         static NativeSecureConnection_t CreateConnection(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
 
     public:
+
+        /**
+         * Initiates a new secure connection.
+         * 
+         * This function is used by client-side applications.
+         * 
+         * @param ctx A client security context.
+         * @param socket A socket.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket.
+         * @exception SecurityException
+         */
         static SecureConnection Connect(const SecurityContext& ctx, const Sockets::Socket& socket);
+        
+        /**
+         * Initiates a new secure connection.
+         * 
+         * This function is used by client-side applications.
+         * 
+         * @param ctx A client security context.
+         * @param socket A socket handle.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket handle.
+         * @exception SecurityException
+         */
         static SecureConnection Connect(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
 
+        /**
+         * Initiates a new secure connection.
+         * 
+         * This function is used by client-side applications.
+         * 
+         * @param ctx A client security context.
+         * @param socket A socket.
+         * @param flags One or more values, bitwise OR-ed together, from the ConnectFlags enum.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket.
+         * @exception SecurityException
+         */
+        static SecureConnection Connect(const SecurityContext& ctx, const Sockets::Socket& socket, const ConnectFlags flags);
+
+        /**
+         * Initiates a new secure connection.
+         * 
+         * This function is used by client-side applications.
+         * 
+         * @param ctx A client security context.
+         * @param socket A socket handle.
+         * @param flags One or more values, bitwise OR-ed together, from the ConnectFlags enum.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket handle.
+         * @exception SecurityException
+         */
+        static SecureConnection Connect(const SecurityContext& ctx, const Sockets::NativeSocket_t socket, const ConnectFlags flags);
+
+        /**
+         * Accepts a new secure connection.
+         * 
+         * This function is used by server-side applications.
+         * 
+         * @param ctx A server security context.
+         * @param socket A socket.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket.
+         * @exception SecurityException
+         */
         static SecureConnection Accept(const SecurityContext& ctx, const Sockets::Socket& socket);
+
+        /**
+         * Accepts a new secure connection.
+         * 
+         * This function is used by server-side applications.
+         * 
+         * @param ctx A server security context.
+         * @param socket A socket handle.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket handle.
+         * @exception SecurityException
+         */
         static SecureConnection Accept(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
+
+        /**
+         * Accepts a new secure connection.
+         * 
+         * This function is used by server-side applications.
+         * 
+         * @param ctx A server security context.
+         * @param socket A socket.
+         * @param flags One or more values, bitwise OR-ed together, from the AcceptFlags enum.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket.
+         * @exception SecurityException
+         */
+        static SecureConnection Accept(const SecurityContext& ctx, const Sockets::Socket& socket, const AcceptFlags flags);
+
+        /**
+         * Accepts a new secure connection.
+         * 
+         * This function is used by server-side applications.
+         * 
+         * @param ctx A server security context.
+         * @param socket A socket handle.
+         * @param flags One or more values, bitwise OR-ed together, from the AcceptFlags enum.
+         * @returns A new secure connection.
+         * @exception std::invalid_argument - The 'ctx' parameter contains an invalid security context,
+         * or the 'socket' parameter contains an invalid socket handle.
+         * @exception SecurityException
+         */
+        static SecureConnection Accept(const SecurityContext& ctx, const Sockets::NativeSocket_t socket, const AcceptFlags flags);
 
     };
 

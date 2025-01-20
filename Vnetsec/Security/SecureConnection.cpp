@@ -54,6 +54,38 @@ NativeSecureConnection_t SecureConnection::GetNativeSecureConnectionHandle() con
     return this->m_ssl;
 }
 
+SecurityProtocol SecureConnection::GetSecurityProtocol() const {
+
+    if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
+        throw std::runtime_error("Invalid secure connection.");
+
+    switch (SSL_version(this->m_ssl)) {
+
+    case SSL2_VERSION:
+        return SecurityProtocol::SSL_2_0;
+
+    case SSL3_VERSION:
+        return SecurityProtocol::SSL_3_0;
+
+    case TLS1_VERSION:
+        return SecurityProtocol::TLS_1_0;
+
+    case TLS1_1_VERSION:
+        return SecurityProtocol::TLS_1_1;
+
+    case TLS1_2_VERSION:
+        return SecurityProtocol::TLS_1_2;
+
+    case TLS1_3_VERSION:
+        return SecurityProtocol::TLS_1_3;
+
+    default:
+        return SecurityProtocol::UNSPECIFIED;
+
+    }
+
+}
+
 std::optional<Certificate> SecureConnection::GetCertificate() const {
 
     if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
@@ -205,6 +237,7 @@ void SecureConnection::Close() {
 
     if (result != 1) {
         SSL_free(this->m_ssl);
+        this->m_ssl = INVALID_SECURE_CONNECTION_HANDLE;
         throw SecurityException(ERR_get_error());
     }
 
@@ -233,10 +266,18 @@ NativeSecureConnection_t SecureConnection::CreateConnection(const SecurityContex
 }
 
 SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const Socket& socket) {
-    return SecureConnection::Connect(ctx, socket.GetNativeSocketHandle());
+    return SecureConnection::Connect(ctx, socket.GetNativeSocketHandle(), ConnectFlags::NONE);
 }
 
 SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const NativeSocket_t socket) {
+    return SecureConnection::Connect(ctx, socket, ConnectFlags::NONE);
+}
+
+SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const Socket& socket, const ConnectFlags flags) {
+    return SecureConnection::Connect(ctx, socket.GetNativeSocketHandle(), flags);
+}
+
+SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const NativeSocket_t socket, const ConnectFlags flags) {
 
     NativeSecureConnection_t ssl = SecureConnection::CreateConnection(ctx, socket);
 
@@ -249,10 +290,18 @@ SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const Nat
 }
 
 SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const Socket& socket) {
-    return SecureConnection::Accept(ctx, socket.GetNativeSocketHandle());
+    return SecureConnection::Accept(ctx, socket.GetNativeSocketHandle(), AcceptFlags::NONE);
 }
 
 SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const NativeSocket_t socket) {
+    return SecureConnection::Accept(ctx, socket, AcceptFlags::NONE);
+}
+
+SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const Socket& socket, const AcceptFlags flags) {
+    return SecureConnection::Accept(ctx, socket.GetNativeSocketHandle(), flags);
+}
+
+SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const NativeSocket_t socket, const AcceptFlags flags) {
 
     NativeSecureConnection_t ssl = SecureConnection::CreateConnection(ctx, socket);
 
@@ -262,6 +311,14 @@ SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const Nati
     if (SSL_set_session_id_context(ssl, sessionId, sizeof(sessionId)) != 1) {
         SSL_free(ssl);
         throw SecurityException(ERR_get_error());
+    }
+
+    if (static_cast<bool>(flags & AcceptFlags::MUTUAL_AUTHENTICATION)) {
+
+        SSL_set_verify(ssl, (SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT), [] (int, X509_STORE_CTX*) -> int {
+            return 1;
+        });
+
     }
 
     if (SSL_accept(ssl) != 1) {
