@@ -8,6 +8,7 @@
 
 #include <Vnet/DateTime.h>
 #include <Vnet/Cryptography/CryptoKey.h>
+#include <Vnet/Cryptography/HashAlgorithm.h>
 
 #include <functional>
 #include <memory>
@@ -97,6 +98,16 @@ namespace Vnet::Cryptography::Certificates {
          * @exception SecurityException
          */
         std::string GetThumbprint(void) const;
+
+        /**
+         * Returns the X.509 certificate's thumbprint.
+         * 
+         * @param hashAlg The hash algorithm used to calculate the thumbprint.
+         * @exception std::runtime_error - The certificate is not valid.
+         * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid hash algorithm
+         * @exception SecurityException
+         */
+        std::string GetThumbprint(const HashAlgorithm hashAlg) const;
 
         /**
          * Returns true if the X.509 certificate has it's corresponding private key.

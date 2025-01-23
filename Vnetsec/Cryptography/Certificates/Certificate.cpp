@@ -5,9 +5,11 @@
 
 #include <Vnet/Cryptography/Certificates/Certificate.h>
 #include <Vnet/Cryptography/KeyUtils.h>
+#include <Vnet/Cryptography/HashFunction.h>
 #include <Vnet/Security/SecurityException.h>
 
 #include <sstream>
+#include <iomanip>
 
 #include <openssl/x509.h>
 #include <openssl/pem.h>
@@ -168,19 +170,23 @@ std::string Certificate::GetSerialNumber() const {
 }
 
 std::string Certificate::GetThumbprint() const {
+    return this->GetThumbprint(HashAlgorithm::SHA1);
+}
+
+std::string Certificate::GetThumbprint(const HashAlgorithm hashAlg) const {
 
     if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
         throw std::runtime_error("Invalid certificate.");
 
-    std::uint8_t digest[SHA_DIGEST_LENGTH] = { 0 };
+    std::vector<std::uint8_t> digest(HashFunction::GetDigestSize(hashAlg) / 8);
     std::uint32_t n = 0;
 
-    if (X509_digest(this->m_cert, EVP_sha1(), digest, &n) <= 0)
+    if (X509_digest(this->m_cert, HashFunction::_GetOpensslEvpMd(hashAlg), digest.data(), &n) <= 0)
         throw SecurityException(ERR_get_error());
 
     std::ostringstream stream;
     for (std::uint32_t i = 0; i < n; ++i)
-        stream << std::hex << std::uppercase << static_cast<std::int32_t>(digest[i]);
+        stream << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<std::int32_t>(digest[i]);
 
     return stream.str();
 }

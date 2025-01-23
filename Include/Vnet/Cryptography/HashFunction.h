@@ -53,6 +53,14 @@ namespace Vnet::Cryptography {
          */
         static void Digest(const HashAlgorithm hashAlg, const std::span<const std::uint8_t> data, const std::span<std::uint8_t> digest);
 
+        /**
+         * Returns the digest size (in bits).
+         * 
+         * @param hashAlg
+         * @exception std::invalid_argument - Invalid hash algorithm specified.
+         */
+        static std::int32_t GetDigestSize(const HashAlgorithm hashAlg);
+
         static const evp_md_st* _GetOpensslEvpMd(const HashAlgorithm hashAlg);
 
     };

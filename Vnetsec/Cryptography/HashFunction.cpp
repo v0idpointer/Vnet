@@ -65,6 +65,14 @@ void HashFunction::Digest(const HashAlgorithm hashAlg, const std::span<const std
 
 }
 
+std::int32_t HashFunction::GetDigestSize(const HashAlgorithm hashAlg) {
+
+    if (!HashFunction::s_hashAlgorithms.contains(hashAlg))
+        throw std::invalid_argument("'hashAlg': Invalid hash algorithm.");
+
+    return HashFunction::s_hashAlgorithms.at(hashAlg).second;
+}
+
 const evp_md_st* HashFunction::_GetOpensslEvpMd(const HashAlgorithm hashAlg) {
 
     if (!HashFunction::s_opensslEvpMds.contains(hashAlg))
