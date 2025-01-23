@@ -103,7 +103,7 @@ namespace Vnet::Cryptography {
          * 
          * @param keySize The key size (in bits).
          * @returns A newly generated RSA private key.
-         * @exception SecurityException - Key generation fails.
+         * @exception SecurityException - Key generation failed.
          */
         static RsaKey Generate(const std::int32_t keySize);
 
