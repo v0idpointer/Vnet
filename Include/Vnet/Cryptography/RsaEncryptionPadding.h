@@ -20,6 +20,8 @@ namespace Vnet::Cryptography {
         PKCS1_OAEP_SHA1,
         PKCS1_OAEP_SHA256,
         PKCS1_OAEP_SHA512,
+        PKCS1_OAEP_SHA3_256,
+        PKCS1_OAEP_SHA3_512,
 
     };
 

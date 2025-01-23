@@ -8,6 +8,8 @@
 #endif
 
 #include <Vnet/Cryptography/HashFunction.h>
+
+#include <Vnet/Cryptography/MD5.h>
 #include <Vnet/Cryptography/SHA1.h>
 #include <Vnet/Cryptography/SHA256.h>
 #include <Vnet/Cryptography/SHA512.h>
@@ -23,6 +25,7 @@ using namespace Vnet::Cryptography;
 
 const std::unordered_map<HashAlgorithm, std::pair<HashFunction::DigestFnPtr, std::int32_t>> HashFunction::s_hashAlgorithms = { 
     
+    { HashAlgorithm::MD5, { &MD5::Digest, MD5::DIGEST_SIZE } },
     { HashAlgorithm::SHA1, { &SHA1::Digest, SHA1::DIGEST_SIZE } },
     { HashAlgorithm::SHA256, { &SHA256::Digest, SHA256::DIGEST_SIZE } },
     { HashAlgorithm::SHA512, { &SHA512::Digest, SHA512::DIGEST_SIZE } },
@@ -33,6 +36,7 @@ const std::unordered_map<HashAlgorithm, std::pair<HashFunction::DigestFnPtr, std
 
 const std::unordered_map<HashAlgorithm, const evp_md_st* (*)(void)> HashFunction::s_opensslEvpMds = {
 
+    { HashAlgorithm::MD5, &EVP_md5 },
     { HashAlgorithm::SHA1, &EVP_sha1 },
     { HashAlgorithm::SHA256, &EVP_sha256 },
     { HashAlgorithm::SHA512, &EVP_sha512 },
