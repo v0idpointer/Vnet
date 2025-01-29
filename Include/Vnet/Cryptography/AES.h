@@ -10,6 +10,7 @@
 #include <Vnet/Cryptography/BlockCipherMode.h>
 
 #include <unordered_map>
+#include <unordered_set>
 
 struct evp_cipher_st;
 
@@ -22,6 +23,7 @@ namespace Vnet::Cryptography {
 
     private:
         static const std::unordered_map<std::pair<std::int32_t, BlockCipherMode>, const evp_cipher_st* (*)(void)> s_ciphers;
+        static const std::unordered_set<BlockCipherMode> s_noIv;
 
     public:
         AES(void) = delete;

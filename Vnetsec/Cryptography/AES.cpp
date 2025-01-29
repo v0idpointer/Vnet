@@ -37,7 +37,37 @@ const std::unordered_map<std::pair<std::int32_t, BlockCipherMode>, const evp_cip
     { { 192, BlockCipherMode::CBC }, &EVP_aes_192_cbc },
     { { 256, BlockCipherMode::CBC }, &EVP_aes_256_cbc },
 
+    { { 128, BlockCipherMode::CFB_1 }, &EVP_aes_128_cfb1 },
+    { { 192, BlockCipherMode::CFB_1 }, &EVP_aes_192_cfb1 },
+    { { 256, BlockCipherMode::CFB_1 }, &EVP_aes_256_cfb1 },
+
+    { { 128, BlockCipherMode::CFB_8 }, &EVP_aes_128_cfb8 },
+    { { 192, BlockCipherMode::CFB_8 }, &EVP_aes_192_cfb8 },
+    { { 256, BlockCipherMode::CFB_8 }, &EVP_aes_256_cfb8 },
+
+    { { 128, BlockCipherMode::CFB_128 }, &EVP_aes_128_cfb128 },
+    { { 192, BlockCipherMode::CFB_128 }, &EVP_aes_192_cfb128 },
+    { { 256, BlockCipherMode::CFB_128 }, &EVP_aes_256_cfb128 },
+
+    { { 128, BlockCipherMode::ECB }, &EVP_aes_128_ecb },
+    { { 192, BlockCipherMode::ECB }, &EVP_aes_192_ecb },
+    { { 256, BlockCipherMode::ECB }, &EVP_aes_256_ecb },
+
+    { { 128, BlockCipherMode::OFB }, &EVP_aes_128_ofb },
+    { { 192, BlockCipherMode::OFB }, &EVP_aes_192_ofb },
+    { { 256, BlockCipherMode::OFB }, &EVP_aes_256_ofb },
+
+    { { 128, BlockCipherMode::CTR }, &EVP_aes_128_ctr },
+    { { 192, BlockCipherMode::CTR }, &EVP_aes_192_ctr },
+    { { 256, BlockCipherMode::CTR }, &EVP_aes_256_ctr },
+
+    { { 128, BlockCipherMode::GCM }, &EVP_aes_128_gcm },
+    { { 192, BlockCipherMode::GCM }, &EVP_aes_192_gcm },
+    { { 256, BlockCipherMode::GCM }, &EVP_aes_256_gcm },
+
 };
+
+const std::unordered_set<BlockCipherMode> AES::s_noIv = { BlockCipherMode::ECB };
 
 static inline std::int32_t GetCiphertextSize(const std::int32_t blockSize, const std::int32_t plaintextLen) noexcept {
     const std::int32_t padding = (blockSize - (plaintextLen % blockSize));
@@ -61,11 +91,11 @@ std::vector<std::uint8_t> AES::Encrypt(
     if (!AES::s_ciphers.contains({ keySize, mode }))
         throw std::invalid_argument("'mode': Invalid/unsupported block cipher mode.");
 
-    if (!iv.has_value())
+    if (!AES::s_noIv.contains(mode) && !iv.has_value())
         throw std::invalid_argument("'iv': std::nullopt");
 
     const EVP_CIPHER* cipher = AES::s_ciphers.at({ keySize, mode })();
-    const std::uint8_t* pIV = (iv.has_value() ? iv->data() : nullptr);
+    const std::uint8_t* pIV = ((iv.has_value() && !AES::s_noIv.contains(mode)) ? iv->data() : nullptr);
     const std::int32_t blockSize = EVP_CIPHER_get_block_size(cipher);
 
     if ((data.size() % blockSize) != 0)
@@ -112,7 +142,7 @@ std::vector<std::uint8_t> AES::Encrypt(
     if (key.GetKey().size() == 0)
         throw std::invalid_argument("'key': Invalid key.");
 
-    if (key.GetIv() == std::nullopt)
+    if (!AES::s_noIv.contains(mode) && !key.GetIv().has_value())
         throw std::invalid_argument("'key': IV is std::nullopt.");
 
     return AES::Encrypt(key.GetKey(), key.GetIv(), data, mode);
@@ -135,11 +165,11 @@ std::vector<std::uint8_t> AES::Decrypt(
     if (!AES::s_ciphers.contains({ keySize, mode }))
         throw std::invalid_argument("'mode': Invalid/unsupported block cipher mode.");
 
-    if (!iv.has_value())
+    if (!AES::s_noIv.contains(mode) && !iv.has_value())
         throw std::invalid_argument("'iv': std::nullopt");
 
     const EVP_CIPHER* cipher = AES::s_ciphers.at({ keySize, mode })();
-    const std::uint8_t* pIV = (iv.has_value() ? iv->data() : nullptr);
+    const std::uint8_t* pIV = ((iv.has_value() && !AES::s_noIv.contains(mode)) ? iv->data() : nullptr);
     const std::int32_t blockSize = EVP_CIPHER_get_block_size(cipher);
 
     if ((encryptedData.size() % blockSize) != 0)
@@ -186,7 +216,7 @@ std::vector<std::uint8_t> AES::Decrypt(
     if (key.GetKey().size() == 0)
         throw std::invalid_argument("'key': Invalid key.");
 
-    if (key.GetIv() == std::nullopt)
+    if (!AES::s_noIv.contains(mode) && !key.GetIv().has_value())
         throw std::invalid_argument("'key': IV is std::nullopt.");
 
     return AES::Decrypt(key.GetKey(), key.GetIv(), encryptedData, mode);
