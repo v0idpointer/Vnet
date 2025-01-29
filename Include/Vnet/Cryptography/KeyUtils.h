@@ -43,6 +43,11 @@ namespace Vnet::Cryptography {
          */
         static std::unique_ptr<CryptoKey> ImportPEM(const std::string_view pem, const std::optional<std::string_view> password);
 
+        /**
+         * Returns true if the provided key is a symmetric cryptographic key.
+         */
+        static bool IsSymmetricKey(const CryptoKey& key) noexcept;
+
     };
 
 }
