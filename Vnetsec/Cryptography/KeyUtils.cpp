@@ -39,3 +39,7 @@ std::unique_ptr<CryptoKey> KeyUtils::ImportPEM(const std::string_view pem, const
 
     throw std::runtime_error("Unknown key type.");
 }
+
+bool KeyUtils::IsSymmetricKey(const CryptoKey& key) noexcept {
+    return (dynamic_cast<const SymmetricKey*>(&key) != nullptr);
+}

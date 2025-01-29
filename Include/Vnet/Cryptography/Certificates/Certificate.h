@@ -148,7 +148,7 @@ namespace Vnet::Cryptography::Certificates {
          * @param privateKey A private key that corresponds to the X.509 certificate being loaded.
          * @returns An X.509 certificate
          * @exception std::invalid_argument - The 'certPem' parameter is empty, or the 'privateKey'
-         * parameter contains an invalid key.
+         * parameter contains an invalid key, or 'privateKey' contains a symmetric cryptographic key.
          * @exception std::runtime_error - The provided private key is of an unknown type.
          * @exception SecurityException - Certificate import failed, or the provided private key
          * does not correspond to the X.509 certificate.

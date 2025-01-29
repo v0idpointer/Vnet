@@ -269,8 +269,15 @@ Certificate Certificate::LoadCertificateFromPEM(const std::string_view certPem, 
     if (certPem.empty())
         throw std::invalid_argument("'certPem': Empty string.");
 
-    if (privateKey.has_value() && (privateKey->get().GetNativeKeyHandle() == INVALID_KEY_HANDLE))
-        throw std::invalid_argument("'privateKey': Invalid key.");
+    if (privateKey.has_value()) {
+
+        if (KeyUtils::IsSymmetricKey(privateKey->get()))
+            throw std::invalid_argument("'privateKey': Symmetric key.");
+
+        if (privateKey->get().GetNativeKeyHandle() == INVALID_KEY_HANDLE)
+            throw std::invalid_argument("'privateKey': Invalid key.");
+
+    }
 
     BIO* bio = BIO_new(BIO_s_mem());
     if (bio == nullptr) throw SecurityException(ERR_get_error());
