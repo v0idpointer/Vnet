@@ -103,6 +103,21 @@ std::vector<std::uint8_t> AES::Encrypt(
     return encrypted;
 }
 
+std::vector<std::uint8_t> AES::Encrypt(
+    const AesKey& key,
+    const std::span<const std::uint8_t> data,
+    const BlockCipherMode mode
+) {
+
+    if (key.GetKey().size() == 0)
+        throw std::invalid_argument("'key': Invalid key.");
+
+    if (key.GetIv() == std::nullopt)
+        throw std::invalid_argument("'key': IV is std::nullopt.");
+
+    return AES::Encrypt(key.GetKey(), key.GetIv(), data, mode);
+}
+
 std::vector<std::uint8_t> AES::Decrypt(
     const std::span<const std::uint8_t> key,
     const std::optional<std::span<const std::uint8_t>> iv,
@@ -160,4 +175,19 @@ std::vector<std::uint8_t> AES::Decrypt(
 
     decrypted.resize(totalLen);
     return decrypted;
+}
+
+std::vector<std::uint8_t> AES::Decrypt(
+    const AesKey& key,
+    const std::span<const std::uint8_t> encryptedData,
+    const BlockCipherMode mode
+) {
+
+    if (key.GetKey().size() == 0)
+        throw std::invalid_argument("'key': Invalid key.");
+
+    if (key.GetIv() == std::nullopt)
+        throw std::invalid_argument("'key': IV is std::nullopt.");
+
+    return AES::Decrypt(key.GetKey(), key.GetIv(), encryptedData, mode);
 }
