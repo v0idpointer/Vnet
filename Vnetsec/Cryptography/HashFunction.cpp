@@ -11,9 +11,13 @@
 
 #include <Vnet/Cryptography/MD5.h>
 #include <Vnet/Cryptography/SHA1.h>
+#include <Vnet/Cryptography/SHA224.h>
 #include <Vnet/Cryptography/SHA256.h>
+#include <Vnet/Cryptography/SHA384.h>
 #include <Vnet/Cryptography/SHA512.h>
+#include <Vnet/Cryptography/SHA3_224.h>
 #include <Vnet/Cryptography/SHA3_256.h>
+#include <Vnet/Cryptography/SHA3_384.h>
 #include <Vnet/Cryptography/SHA3_512.h>
 
 #include <openssl/evp.h>
@@ -27,9 +31,13 @@ const std::unordered_map<HashAlgorithm, std::pair<HashFunction::DigestFnPtr, std
     
     { HashAlgorithm::MD5, { &MD5::Digest, MD5::DIGEST_SIZE } },
     { HashAlgorithm::SHA1, { &SHA1::Digest, SHA1::DIGEST_SIZE } },
+    { HashAlgorithm::SHA224, { &SHA224::Digest, SHA224::DIGEST_SIZE } },
     { HashAlgorithm::SHA256, { &SHA256::Digest, SHA256::DIGEST_SIZE } },
+    { HashAlgorithm::SHA384, { &SHA384::Digest, SHA384::DIGEST_SIZE } },
     { HashAlgorithm::SHA512, { &SHA512::Digest, SHA512::DIGEST_SIZE } },
+    { HashAlgorithm::SHA3_224, { &SHA3_224::Digest, SHA3_224::DIGEST_SIZE } },
     { HashAlgorithm::SHA3_256, { &SHA3_256::Digest, SHA3_256::DIGEST_SIZE } },
+    { HashAlgorithm::SHA3_384, { &SHA3_384::Digest, SHA3_384::DIGEST_SIZE } },
     { HashAlgorithm::SHA3_512, { &SHA3_512::Digest, SHA3_512::DIGEST_SIZE } },
 
 };
@@ -38,9 +46,13 @@ const std::unordered_map<HashAlgorithm, const evp_md_st* (*)(void)> HashFunction
 
     { HashAlgorithm::MD5, &EVP_md5 },
     { HashAlgorithm::SHA1, &EVP_sha1 },
+    { HashAlgorithm::SHA224, &EVP_sha224 },
     { HashAlgorithm::SHA256, &EVP_sha256 },
+    { HashAlgorithm::SHA384, &EVP_sha384 },
     { HashAlgorithm::SHA512, &EVP_sha512 },
+    { HashAlgorithm::SHA3_224, &EVP_sha3_224 },
     { HashAlgorithm::SHA3_256, &EVP_sha3_256 },
+    { HashAlgorithm::SHA3_384, &EVP_sha3_384 },
     { HashAlgorithm::SHA3_512, &EVP_sha3_512 },
 
 };

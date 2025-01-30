@@ -25,9 +25,13 @@ const std::unordered_map<RsaEncryptionPadding, std::tuple<std::int32_t, const ev
 
     { RsaEncryptionPadding::PKCS1, { RSA_PKCS1_PADDING, nullptr, nullptr } },
     { RsaEncryptionPadding::PKCS1_OAEP_SHA1, { RSA_PKCS1_OAEP_PADDING, &EVP_sha1, &EVP_sha1 } },
+    { RsaEncryptionPadding::PKCS1_OAEP_SHA224, { RSA_PKCS1_OAEP_PADDING, &EVP_sha224, &EVP_sha224 } },
     { RsaEncryptionPadding::PKCS1_OAEP_SHA256, { RSA_PKCS1_OAEP_PADDING, &EVP_sha256, &EVP_sha256 } },
+    { RsaEncryptionPadding::PKCS1_OAEP_SHA384, { RSA_PKCS1_OAEP_PADDING, &EVP_sha384, &EVP_sha384 } },
     { RsaEncryptionPadding::PKCS1_OAEP_SHA512, { RSA_PKCS1_OAEP_PADDING, &EVP_sha512, &EVP_sha512 } },
+    { RsaEncryptionPadding::PKCS1_OAEP_SHA3_224, { RSA_PKCS1_OAEP_PADDING, &EVP_sha3_224, &EVP_sha3_224 } },
     { RsaEncryptionPadding::PKCS1_OAEP_SHA3_256, { RSA_PKCS1_OAEP_PADDING, &EVP_sha3_256, &EVP_sha3_256 } },
+    { RsaEncryptionPadding::PKCS1_OAEP_SHA3_384, { RSA_PKCS1_OAEP_PADDING, &EVP_sha3_384, &EVP_sha3_384 } },
     { RsaEncryptionPadding::PKCS1_OAEP_SHA3_512, { RSA_PKCS1_OAEP_PADDING, &EVP_sha3_512, &EVP_sha3_512 } },
 
 };
