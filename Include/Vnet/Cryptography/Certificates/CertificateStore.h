@@ -59,6 +59,12 @@ namespace Vnet::Cryptography::Certificates {
 
         /**
          * Removes an X.509 certificate from the certificate store.
+         * 
+         * @param cert An X.509 certificate.
+         * @exception std::runtime_error - The certificate store is not valid.
+         * @exception std::invalid_argument - The 'cert' parameter contains an invalid certificate,
+         * or the specified certificate does not exist in the certificate store.
+         * @exception SecurityException
          */
         void Remove(const Certificate& cert);
 

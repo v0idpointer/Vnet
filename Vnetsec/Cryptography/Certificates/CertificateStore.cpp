@@ -4,6 +4,7 @@
 */
 
 #include <Vnet/Cryptography/Certificates/CertificateStore.h>
+#include <Vnet/Cryptography/HashFunction.h>
 #include <Vnet/Cryptography/KeyUtils.h>
 #include <Vnet/Security/SecurityException.h>
 
@@ -377,7 +378,39 @@ void CertificateStore::Add(const Certificate& cert) {
 void CertificateStore::Remove(const Certificate& cert) {
 
 #ifdef VNET_PLATFORM_WINDOWS
-    throw std::runtime_error("Not implemented.");
+    
+    if (this->m_certStore == INVALID_CERT_STORE_HANDLE)
+        throw std::runtime_error("Invalid certificate store.");
+
+    if (cert.GetNativeCertificateHandle() == INVALID_CERTIFICATE_HANDLE)
+        throw std::invalid_argument("'cert': Invalid certificate.");
+
+    const HashAlgorithm hashAlg = HashAlgorithm::SHA1;
+    std::vector<std::uint8_t> digest(HashFunction::GetDigestSize(hashAlg));
+    std::uint32_t n = 0;
+
+    if (X509_digest(cert.GetNativeCertificateHandle(), HashFunction::_GetOpensslEvpMd(hashAlg), digest.data(), &n) != 1)
+        throw SecurityException(ERR_get_error());
+
+    CRYPT_HASH_BLOB hashBlob = { 0 };
+    hashBlob.pbData = reinterpret_cast<BYTE*>(digest.data());
+    hashBlob.cbData = static_cast<DWORD>(n);
+
+    PCCERT_CONTEXT pCertContext = CertFindCertificateInStore(
+        this->m_certStore,
+        (X509_ASN_ENCODING | PKCS_7_ASN_ENCODING),
+        NULL,
+        CERT_FIND_SHA1_HASH,
+        &hashBlob,
+        nullptr
+    );
+
+    if (pCertContext == nullptr) 
+        throw std::invalid_argument("'cert': The specified certificate does not exist.");
+
+    if (!CertDeleteCertificateFromStore(pCertContext))
+        throw SecurityException(GetLastError(), GetErrorMessage(GetLastError()));
+
 #else
     throw std::runtime_error("Operating system not supported.");
 #endif
