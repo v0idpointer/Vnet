@@ -3,10 +3,15 @@
     Copyright (c) 2024-2025 V0idPointer
 */
 
+#ifndef VNET_BUILD_VNETSEC
+#define VNET_BUILD_VNETSEC
+#endif
+
 #include <Vnet/Cryptography/Certificates/CertificateStore.h>
 #include <Vnet/Cryptography/HashFunction.h>
 #include <Vnet/Cryptography/KeyUtils.h>
 #include <Vnet/Security/SecurityException.h>
+#include <Vnet/SystemNotSupportedException.h>
 
 #ifdef VNET_PLATFORM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -24,6 +29,20 @@
 using namespace Vnet::Cryptography::Certificates;
 using namespace Vnet::Cryptography;
 using namespace Vnet::Security;
+using namespace Vnet;
+
+const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_locations = { 
+
+    { CertStoreLocation::CURRENT_SERVICE, CERT_SYSTEM_STORE_CURRENT_SERVICE },
+    { CertStoreLocation::CURRENT_USER, CERT_SYSTEM_STORE_CURRENT_USER },
+    { CertStoreLocation::CURRENT_USER_GP, CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY },
+    { CertStoreLocation::LOCAL_MACHINE, CERT_SYSTEM_STORE_LOCAL_MACHINE },
+    { CertStoreLocation::LOCAL_MACHINE_E, CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE },
+    { CertStoreLocation::LOCAL_MACHINE_GP, CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY },
+    { CertStoreLocation::SERVICES, CERT_SYSTEM_STORE_SERVICES },
+    { CertStoreLocation::USERS, CERT_SYSTEM_STORE_USERS },
+
+};
 
 CertificateStore::CertificateStore(NativeCertStore_t const certStore) : m_certStore(certStore) { }
 
@@ -342,7 +361,7 @@ std::vector<std::shared_ptr<Certificate>> CertificateStore::GetCertificates() co
 
     return certs;
 #else
-    throw std::runtime_error("Operating system not supported.");
+    throw SystemNotSupportedException();
 #endif
 
 }
@@ -370,7 +389,7 @@ void CertificateStore::Add(const Certificate& cert) {
     CertFreeCertificateContext(pCertContext);
 
 #else
-    throw std::runtime_error("Operating system not supported.");
+    throw SystemNotSupportedException();
 #endif
 
 }
@@ -412,21 +431,24 @@ void CertificateStore::Remove(const Certificate& cert) {
         throw SecurityException(GetLastError(), GetErrorMessage(GetLastError()));
 
 #else
-    throw std::runtime_error("Operating system not supported.");
+    throw SystemNotSupportedException();
 #endif
 
 }
 
-CertificateStore CertificateStore::OpenPersonalCertStore() {
+CertificateStore CertificateStore::OpenStore(const CertStoreLocation location, const std::wstring_view name) {
 
 #ifdef VNET_PLATFORM_WINDOWS
+
+    if (!CertificateStore::s_locations.contains(location))
+        throw std::invalid_argument("'location': Invalid certificate store location.");
 
     NativeCertStore_t certStore = CertOpenStore(
         CERT_STORE_PROV_SYSTEM_W,
         NULL,
         NULL,
-        CERT_SYSTEM_STORE_CURRENT_USER,
-        L"MY"
+        (CertificateStore::s_locations.at(location) | CERT_STORE_OPEN_EXISTING_FLAG),
+        name.data()
     );
 
     if (certStore == nullptr)
@@ -434,7 +456,17 @@ CertificateStore CertificateStore::OpenPersonalCertStore() {
 
     return { certStore };
 #else
-    throw std::runtime_error("Operating system not supported.");
+    throw SystemNotSupportedException();
+#endif
+
+}
+
+CertificateStore CertificateStore::OpenPersonalStore() {
+
+#ifdef VNET_PLATFORM_WINDOWS
+    return CertificateStore::OpenStore(CertStoreLocation::CURRENT_USER, L"MY");
+#else
+    throw SystemNotSupportedException();
 #endif
 
 }
