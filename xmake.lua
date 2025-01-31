@@ -43,6 +43,9 @@ target("Vnetsec")
     if is_plat("windows") then
         add_links("libcrypto.lib")
         add_links("libssl.lib")
+        add_links("Advapi32.lib")
+        add_links("Crypt32.lib")
+        add_links("Ncrypt.lib")
     else
         add_links("crypto")
         add_links("ssl")
