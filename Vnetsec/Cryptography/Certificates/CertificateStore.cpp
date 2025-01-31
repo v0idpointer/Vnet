@@ -114,7 +114,7 @@ static PCCERT_CONTEXT CertificateToWin32Cert(const Certificate& cert) {
 
     PKCS12* pfx = PKCS12_create(
         "password", 
-        "Vnetsec PFX", 
+        nullptr,
         pKey, 
         cert.GetNativeCertificateHandle(), 
         nullptr, 
