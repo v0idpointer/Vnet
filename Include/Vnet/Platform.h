@@ -6,6 +6,8 @@
 #ifndef _VNET_PLATFORM_H_
 #define _VNET_PLATFORM_H_
 
+#include <Vnet/Platform.h>
+
 #if defined(_WIN32)
 #define VNET_PLATFORM_WINDOWS
 #elif defined(__APPLE__) || defined(__MACH__)

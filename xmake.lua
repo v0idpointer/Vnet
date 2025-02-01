@@ -14,6 +14,10 @@ target("Vnetcore")
         add_links("WS2_32.lib")
     end
 
+    if is_plat("windows") then 
+        add_files("Vnetcore/VersionInfo.rc")
+    end
+
 target("Vnethttp")
     set_kind("shared")
     set_languages("cxx20")
@@ -22,6 +26,10 @@ target("Vnethttp")
     add_includedirs("Include")
     add_includedirs("Vnethttp")
     add_defines("VNET_BUILD_VNETHTTP")
+
+    if is_plat("windows") then 
+        add_files("Vnethttp/VersionInfo.rc")
+    end
 
 target("Vnetsec")
     set_kind("shared")
@@ -49,4 +57,8 @@ target("Vnetsec")
     else
         add_links("crypto")
         add_links("ssl")
+    end
+
+    if is_plat("windows") then 
+        add_files("Vnetsec/VersionInfo.rc")
     end

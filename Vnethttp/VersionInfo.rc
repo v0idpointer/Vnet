@@ -1,0 +1,68 @@
+/*
+    Vnet: Networking library for C++
+    Copyright (c) 2024-2025 V0idPointer
+*/
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#include <Vnet/Version.h>
+
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+/**
+ * This will format the version string in one of the following formats:
+ * 
+ * <MAJOR>.<MINOR>[TAG]
+ * <MAJOR>.<MINOR>.<PATCH>[TAG]
+ * <MAJOR>.<MINOR>.<PATCH>.<REVISION>[TAG]
+ */
+
+#if VNET_VERSION_REVISION != 0
+#define VNET_VERSION STR(VNET_VERSION_MAJOR) "." STR(VNET_VERSION_MINOR) "." STR(VNET_VERSION_PATCH) "." STR(VNET_VERSION_REVISION) VNET_VERSION_TAG
+#else // VNET_VERSION_REVISION != 0
+#if VNET_VERSION_PATCH != 0
+#define VNET_VERSION STR(VNET_VERSION_MAJOR) "." STR(VNET_VERSION_MINOR) "." STR(VNET_VERSION_PATCH) VNET_VERSION_TAG
+#else // VNET_VERSION_PATCH != 0
+#define VNET_VERSION STR(VNET_VERSION_MAJOR) "." STR(VNET_VERSION_MINOR) VNET_VERSION_TAG
+#endif // VNET_VERSION_PATCH != 0
+#endif // VNET_VERSION_REVISION != 0
+
+VS_VERSION_INFO VERSIONINFO
+    FILEVERSION VNET_VERSION_MAJOR, VNET_VERSION_MINOR, VNET_VERSION_PATCH, VNET_VERSION_REVISION
+    PRODUCTVERSION VNET_VERSION_MAJOR, VNET_VERSION_MINOR, VNET_VERSION_PATCH, VNET_VERSION_REVISION
+    FILEFLAGSMASK 0x3FL
+#ifdef _DEBUG
+    FILEFLAGS VS_FF_DEBUG
+#else
+    FILEFLAGS 0x0L
+#endif
+    FILEOS VOS_NT_WINDOWS32
+    FILETYPE VFT_DLL
+    FILESUBTYPE 0x0L
+BEGIN
+
+    BLOCK "StringFileInfo"
+    BEGIN
+
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "V0idPointer (v0idpointer.net)"
+            VALUE "FileDescription", "Vnet HTTP library"
+            VALUE "FileVersion", VNET_VERSION
+            VALUE "InternalName", "VNETHTTP"
+            VALUE "LegalCopyright", "Copyright (c) 2024-2025 V0idPointer"
+            VALUE "OriginalFilename", "Vnethttp.dll"
+            VALUE "ProductName", "Vnet"
+            VALUE "ProductVersion", VNET_VERSION
+        END
+
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 0x04B0
+    END
+
+END
