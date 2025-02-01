@@ -193,7 +193,7 @@ std::int32_t Socket::Receive(const std::span<std::uint8_t> data, const std::int3
 
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
-    if (size < 0) throw std::out_of_range("'size' is less that zero.");
+    if (size < 0) throw std::out_of_range("'size' is less than zero.");
     if (size > (data.size() - offset)) throw std::out_of_range("'size' is greater than the buffer size minus 'offset'.");
 
     char* const buffer = reinterpret_cast<char*>(data.data() + offset);
@@ -221,7 +221,7 @@ std::int32_t Socket::SendTo(const std::span<const std::uint8_t> data, const std:
 
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
-    if (size < 0) throw std::out_of_range("'size' is less that zero.");
+    if (size < 0) throw std::out_of_range("'size' is less than zero.");
     if (size > (data.size() - offset)) throw std::out_of_range("'size' is greater than the buffer size minus 'offset'.");
 
     const char* const buffer = reinterpret_cast<const char*>(data.data() + offset);
