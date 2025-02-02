@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETCORE_SOCKETS_SOCKETEXCEPTION_H_
@@ -15,6 +15,9 @@
 
 namespace Vnet::Sockets {
 
+    /**
+     * An exception that is thrown when a socket or a network error occurs.
+     */
     class VNETCOREAPI SocketException : public std::runtime_error {
 
     private:

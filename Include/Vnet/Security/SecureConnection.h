@@ -87,7 +87,7 @@ namespace Vnet::Security {
         /**
          * Sends data over the secure connection.
          * 
-         * @param data Data to be sent.
+         * @param data The data to be sent.
          * @param offset The position in the data buffer from where to start sending.
          * @param size The number of bytes to send.
          * @param flags Socket flags. This value must be SocketFlags::NONE.
@@ -104,7 +104,7 @@ namespace Vnet::Security {
         /**
          * Sends data over the secure connection.
          * 
-         * @param data Data to be sent.
+         * @param data The data to be sent.
          * @param offset The position in the data buffer from where to start sending.
          * @param size The number of bytes to send.
          * @returns The number of bytes sent.
@@ -119,7 +119,7 @@ namespace Vnet::Security {
         /**
          * Sends data over the secure connection.
          * 
-         * @param data Data to be sent.
+         * @param data The data to be sent.
          * @param flags Socket flags. This value must be SocketFlags::NONE.
          * @returns The number of bytes sent.
          * @exception std::runtime_error - The secure connection is not valid.
@@ -131,7 +131,7 @@ namespace Vnet::Security {
         /**
          * Sends data over the secure connection.
          * 
-         * @param data Data to be sent.
+         * @param data The data to be sent.
          * @returns The number of bytes sent.
          * @exception std::runtime_error - The secure connection is not valid.
          * @exception SecurityException - Failed to send the data.
@@ -141,7 +141,7 @@ namespace Vnet::Security {
         /**
          * Reads data from the secure connection.
          * 
-         * @param data Buffer where the read data will be stored.
+         * @param data The buffer where the read data will be stored.
          * @param offset The position in the data buffer where to store the read data.
          * @param size The number of bytes to read.
          * @param flags Socket flags. This can be SocketFlags::NONE or SocketFlags::PEEK.
@@ -158,7 +158,7 @@ namespace Vnet::Security {
         /**
          * Reads data from the secure connection.
          * 
-         * @param data Buffer where the read data will be stored.
+         * @param data The buffer where the read data will be stored.
          * @param offset The position in the data buffer where to store the read data.
          * @param size The number of bytes to read.
          * @returns The number of bytes read.
@@ -173,7 +173,7 @@ namespace Vnet::Security {
         /**
          * Reads data from the secure connection.
          * 
-         * @param data Buffer where the read data will be stored.
+         * @param data The buffer where the read data will be stored.
          * @param flags Socket flags. This can be SocketFlags::NONE or SocketFlags::PEEK.
          * @returns The number of bytes read.
          * @exception std::runtime_error - The secure connection is not valid.
@@ -185,7 +185,7 @@ namespace Vnet::Security {
         /**
          * Reads data from the secure connection.
          * 
-         * @param data Buffer where the read data will be stored.
+         * @param data The buffer where the read data will be stored.
          * @returns The number of bytes read.
          * @exception std::runtime_error - The secure connection is not valid.
          * @exception SecurityException - Failed to read the data.
