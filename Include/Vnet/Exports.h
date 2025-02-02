@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNET_EXPORTS_H_
@@ -24,6 +24,12 @@
 #define VNETSECURITYAPI VNET_DLLEXPORT
 #else
 #define VNETSECURITYAPI VNET_DLLIMPORT
+#endif
+
+#ifdef VNET_BUILD_VNETWEB
+#define VNETWEBAPI VNET_DLLEXPORT
+#else
+#define VNETWEBAPI VNET_DLLIMPORT
 #endif
 
 #endif // _VNET_EXPORTS_H_
