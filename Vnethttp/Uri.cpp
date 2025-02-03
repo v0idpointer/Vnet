@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Uri.h>
@@ -164,7 +164,7 @@ std::optional<Uri> Uri::ParseUri(std::string_view str, const bool exceptions) {
     std::string::const_iterator it;
 
     if (str.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty URI string.");
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
         return std::nullopt;
     }
 

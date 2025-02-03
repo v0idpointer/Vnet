@@ -15,7 +15,11 @@ namespace Vnet::Sockets {
     enum class VNETCOREAPI Protocol : std::int32_t {
 
         UNSPECIFIED,
+
+        /** Transmission Control Protocol (TCP) */
         TCP,
+
+        /** User Datagram Protocol (UDP) */
         UDP,
 
     };

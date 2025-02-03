@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef VNET_BUILD_VNETHTTP
@@ -268,6 +268,11 @@ using BadDatetimeFormatException = std::runtime_error;
 
 std::optional<DateTime> DateTime::ParseDateFromString(std::string_view str, const bool exceptions) {
     
+    if (str.empty()) {
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
+        return std::nullopt;
+    }
+
     auto [hourOffset, minuteOffset] = DateTime::Now().GetTimezoneOffsetEx();
 
     // check if the name of the week day is valid:
@@ -345,6 +350,11 @@ std::optional<DateTime> DateTime::ParseDateFromString(std::string_view str, cons
 
 std::optional<DateTime> DateTime::ParseDateFromUTCString(std::string_view str, const bool exceptions) {
 
+    if (str.empty()) {
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
+        return std::nullopt;
+    }
+
     const auto [hourOffset, minuteOffset] = DateTime::Now().GetTimezoneOffsetEx();
 
     // check if the name of the week day is valid:
@@ -396,6 +406,11 @@ std::optional<DateTime> DateTime::ParseDateFromUTCString(std::string_view str, c
 }
 
 std::optional<DateTime> DateTime::ParseDateFromISO8601String(const std::string_view str, const bool exceptions) {
+
+    if (str.empty()) {
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
+        return std::nullopt;
+    }
 
     std::tm tm = { 0 };
     std::stringstream stream { std::string(str) };

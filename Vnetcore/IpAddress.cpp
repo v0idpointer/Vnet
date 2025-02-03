@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef VNET_BUILD_VNETCORE
@@ -35,8 +35,21 @@ IpAddress::IpAddress(const std::uint8_t aa, const std::uint8_t bb, const std::ui
 }
 
 IpAddress::IpAddress(const std::span<const std::uint8_t> bytes) {
-    if (bytes.size() != 16) throw std::invalid_argument("The provided byte buffer does not contain a valid IPv6 address.");
-    this->m_bytes = { bytes.begin(), bytes.end() };
+
+    // IPv4:
+    if (bytes.size() == 4) {
+        this->m_bytes = { bytes[0], bytes[1], bytes[2], bytes[3] };
+        return;
+    }
+
+    // IPv6:
+    if (bytes.size() == 16) {
+        this->m_bytes = { bytes.begin(), bytes.end() };
+        return;
+    }
+
+    throw std::invalid_argument("'bytes': The provided byte buffer does not contain a valid IP address.");
+
 }
 
 IpAddress::IpAddress(const IpAddress& address) {
@@ -122,7 +135,7 @@ std::optional<IpAddress> IpAddress::ParseVersion4(const std::string_view address
     struct sockaddr_in sockaddr = { 0 };
 
     if (inet_pton(AF_INET, address.data(), &sockaddr.sin_addr) != 1) {
-        if (exceptions) throw std::invalid_argument("The provided address is not a valid IPv4 address.");
+        if (exceptions) throw std::invalid_argument("'address': The provided address is not a valid IPv4 address.");
         return std::nullopt;
     }
 
@@ -134,7 +147,7 @@ std::optional<IpAddress> IpAddress::ParseVersion6(const std::string_view address
     struct sockaddr_in6 sockaddr = { 0 };
 
     if (inet_pton(AF_INET6, address.data(), &sockaddr.sin6_addr) != 1) {
-        if (exceptions) throw std::invalid_argument("The provided address is not a valid IPv6 address.");
+        if (exceptions) throw std::invalid_argument("'address': The provided address is not a valid IPv6 address.");
         return std::nullopt;
     }
 

@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETCORE_IPADDRESS_H_
@@ -18,15 +18,47 @@
 
 namespace Vnet {
 
+    /**
+     * Represents a network port number.
+     */
     typedef std::uint16_t Port;
 
+    /** Port number used for HTTP */
+    constexpr Port HTTP_PORT = 80;
+
+    /** Port number used for HTTPS */
+    constexpr Port HTTPS_PORT = 443;
+
+    /**
+     * Represents an IPv4 or an IPv6 address.
+     */
     class VNETCOREAPI IpAddress {
 
     public:
+
+        /**
+         * 0.0.0.0
+         */
         static const IpAddress ANY;
+
+        /**
+         * 127.0.0.1
+         */
         static const IpAddress LOCALHOST;
+
+        /**
+         * 255.255.255.255
+         */
         static const IpAddress BROADCAST;
+
+        /**
+         * ::
+         */
         static const IpAddress ANY_V6;
+
+        /**
+         * ::1
+         */
         static const IpAddress LOCALHOST_V6;
 
     private:
@@ -44,11 +76,31 @@ namespace Vnet {
         IpAddress& operator= (IpAddress&& address) noexcept;
         bool operator== (const IpAddress& address) const;
 
+        /**
+         * Returns true if the IP address is an IPv6 address.
+         */
         bool IsVersion6(void) const;
+
+        /**
+         * Returns true if the IP address is a public IP address.
+         */
         bool IsPublicAddress(void) const;
+
+        /**
+         * Returns true if the IP address is a private IP address.
+         */
         bool IsPrivateAddress(void) const;
+
+        /**
+         * Returns the address family of the IP address.
+         * 
+         * @returns AddressFamily::IPV4 or AddressFamily::IPV6
+         */
         Vnet::Sockets::AddressFamily GetAddressFamily(void) const;
 
+        /**
+         * Returns the string representation of the IP address.
+         */
         std::string ToString(void) const;
 
     private:
@@ -56,7 +108,22 @@ namespace Vnet {
         static std::optional<IpAddress> ParseVersion6(const std::string_view address, const bool exceptions);
 
     public:
+
+        /**
+         * Parses a string representation of an IP address.
+         * 
+         * @param address A string containing an IPv4 or an IPv6 address.
+         * @returns An IpAddress object.
+         * @exception std::invalid_argument - The 'address' parameter contains an invalid IP address.
+         */
         static IpAddress Parse(const std::string_view address);
+
+        /**
+         * Tries to parse a string representation of an IP address.
+         * 
+         * @param address A string containing an IPv4 or an IPv6 address.
+         * @returns If successful, an IpAddress object is returned; otherwise, std::nullopt is returned.
+         */
         static std::optional<IpAddress> TryParse(const std::string_view address);
 
     };

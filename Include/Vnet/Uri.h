@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNETHTTP_URI_H_
@@ -15,6 +15,9 @@
 
 namespace Vnet {
 
+    /**
+     * Represents a Uniform Resource Identifier (URI).
+     */
     class VNETHTTPAPI Uri {
 
     private:
@@ -37,17 +40,55 @@ namespace Vnet {
         bool operator== (const Uri& uri) const;
 
     public:
+
+        /**
+         * Returns the URI scheme.
+         */
         const std::optional<std::string>& GetScheme(void) const;
+
+        /**
+         * Returns the username and password.
+         */
         const std::optional<std::string>& GetUserInfo(void) const;
+
+        /**
+         * Returns the hostname.
+         */
         const std::optional<std::string>& GetHost(void) const;
+
+        /**
+         * Returns the port number.
+         */
         const std::optional<std::uint16_t> GetPort(void) const;
+
+        /**
+         * Returns the path.
+         */
         const std::optional<std::string>& GetPath(void) const;
+
+        /**
+         * Returns the query string.
+         */
         const std::optional<std::string>& GetQuery(void) const;
+
+        /**
+         * Returns the fragment.
+         */
         const std::optional<std::string>& GetFragment(void) const;
 
+        /**
+         * Returns true if the URI is an absolute URI.
+         */
         bool IsAbsoluteUri(void) const;
+
+        /**
+         * Returns true if the URI is a relative URI.
+         */
         bool IsRelativeUri(void) const;
 
+        /**
+         * Returns the string representation of the URI.
+         */
         std::string ToString(void) const;
 
     private:
@@ -55,12 +96,57 @@ namespace Vnet {
         static std::optional<Uri> ParseUri(std::string_view str, const bool exceptions);
 
     public:
+
+        /**
+         * Parses a URI.
+         * 
+         * @param str A string containing a URI.
+         * @returns A Uri object.
+         * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception BadUriException - URI malformed.
+         */
         static Uri Parse(const std::string_view str);
+
+        /**
+         * Tries to parse a URI.
+         * 
+         * @param str A string containing a URI.
+         * @returns If successful, a Uri object is returned; otherwise, std::nullopt is returned.
+         */
         static std::optional<Uri> TryParse(const std::string_view str);
 
+        /**
+         * Percent-encodes a string.
+         * 
+         * @param str A string to percent-encode.
+         * @returns A percent-encoded string.
+         */
         static std::string Encode(const std::string_view str);
+
+        /**
+         * Percent-encodes a string.
+         * 
+         * @param str A string to percent-encode.
+         * @param encodePathDelimiters If true, path delimiters ('/') will be percent-encoded.
+         * @returns A percent-encoded string.
+         */
         static std::string Encode(const std::string_view str, const bool encodePathDelimiters);
+
+        /**
+         * Percent-decodes a string.
+         * 
+         * @param str A percent-encoded string.
+         * @returns A percent-decoded string.
+         * @exception BadUriException - Bad percent-encoding.
+         */
         static std::string Decode(const std::string_view str);
+
+        /**
+         * Tries to percent-decode a string.
+         * 
+         * @param str A percent-encoded string.
+         * @returns If successful, a percent-decoded string is returned; otherwise, std::nullopt is returned.
+         */
         static std::optional<std::string> TryDecode(const std::string_view str);
 
     };
