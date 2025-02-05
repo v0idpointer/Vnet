@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Http/HttpHeader.h>
@@ -79,7 +79,7 @@ const std::string& HttpHeader::GetValue() const {
 void HttpHeader::SetName(const std::string_view name) {
 
     if (name.empty()) 
-        throw std::invalid_argument("Empty header name.");
+        throw std::invalid_argument("'name': Empty string.");
 
     std::string_view::const_iterator it;
     it = std::find_if(name.begin(), name.end(), [] (const char ch) -> bool {
@@ -93,7 +93,7 @@ void HttpHeader::SetName(const std::string_view name) {
     });
 
     if (it != name.end()) 
-        throw std::invalid_argument("Invalid character(s) in header name.");
+        throw std::invalid_argument("'name': Invalid character(s).");
 
     this->m_name = name;
 
@@ -135,13 +135,13 @@ void HttpHeader::SetValue(const std::string_view value) {
         if ((ch == '<') || (ch == '=') || (ch == '>') || (ch == '?')) return false;
         if ((ch == '@') || (ch == '[') || (ch == ']') || (ch == '^')) return false;
         if ((ch == '_') || (ch == '`') || (ch == '{') || (ch == '|')) return false;
-        if ((ch == '}') || (ch == '~') || (ch == ' ')) return false;
+        if ((ch == '}') || (ch == '~') || (ch == ' ') || (ch == '"')) return false;
 
         return true;
     });
 
     if (it != value.end())
-        throw std::invalid_argument("Invalid character(s) in header value.");
+        throw std::invalid_argument("'value': Invalid character(s).");
 
     this->m_value = value;
 
@@ -160,7 +160,7 @@ std::optional<HttpHeader> HttpHeader::ParseHeader(std::string_view str, const bo
     std::size_t pos = 0;
 
     if (str.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty string.");
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
         return std::nullopt;
     }
 

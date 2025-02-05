@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef VNET_BUILD_VNETHTTP
@@ -44,7 +44,7 @@ HttpHeaderCollection& HttpHeaderCollection::operator= (HttpHeaderCollection&& he
 }
 
 bool HttpHeaderCollection::operator== (const HttpHeaderCollection& headers) const {
-    return (this->m_headers == headers.m_headers);
+    return (this->ToString() == headers.ToString());
 }
 
 static inline bool StrEqualsIgnoreCase(const std::string_view lhs, const std::string_view rhs) noexcept {
@@ -226,7 +226,7 @@ std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::stri
     std::vector<std::string_view> v = { };
 
     if (str.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty string.");
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
         return std::nullopt;
     }
 

@@ -43,51 +43,71 @@ namespace Vnet {
 
         /**
          * Returns the URI scheme.
+         * 
+         * @returns An optional string.
          */
         const std::optional<std::string>& GetScheme(void) const;
 
         /**
          * Returns the username and password.
+         * 
+         * @returns An optional string.
          */
         const std::optional<std::string>& GetUserInfo(void) const;
 
         /**
          * Returns the hostname.
+         * 
+         * @returns An optional string.
          */
         const std::optional<std::string>& GetHost(void) const;
 
         /**
          * Returns the port number.
+         * 
+         * @returns An optional unsigned 16-bit integer.
          */
         const std::optional<std::uint16_t> GetPort(void) const;
 
         /**
          * Returns the path.
+         * 
+         * @returns An optional string.
          */
         const std::optional<std::string>& GetPath(void) const;
 
         /**
          * Returns the query string.
+         * 
+         * @returns An optional string.
          */
         const std::optional<std::string>& GetQuery(void) const;
 
         /**
          * Returns the fragment.
+         * 
+         * @returns An optional string.
          */
         const std::optional<std::string>& GetFragment(void) const;
 
         /**
          * Returns true if the URI is an absolute URI.
+         * 
+         * @returns A boolean.
          */
         bool IsAbsoluteUri(void) const;
 
         /**
          * Returns true if the URI is a relative URI.
+         * 
+         * @returns A boolean.
          */
         bool IsRelativeUri(void) const;
 
         /**
          * Returns the string representation of the URI.
+         * 
+         * @returns A string.
          */
         std::string ToString(void) const;
 
@@ -101,7 +121,7 @@ namespace Vnet {
          * Parses a URI.
          * 
          * @param str A string containing a URI.
-         * @returns A Uri object.
+         * @returns A Uri.
          * @exception std::invalid_argument - The 'str' parameter is an empty string.
          * @exception BadUriException - URI malformed.
          */
@@ -111,7 +131,7 @@ namespace Vnet {
          * Tries to parse a URI.
          * 
          * @param str A string containing a URI.
-         * @returns If successful, a Uri object is returned; otherwise, std::nullopt is returned.
+         * @returns If successful, a Uri is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<Uri> TryParse(const std::string_view str);
 

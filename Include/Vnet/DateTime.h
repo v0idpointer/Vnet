@@ -91,6 +91,8 @@ namespace Vnet {
 
         /**
          * Returns the number of seconds since the Unix epoch (January 1, 1970).
+         * 
+         * @returns A time_t.
          */
         std::time_t GetTime(void) const;
 
@@ -215,16 +217,22 @@ namespace Vnet {
         
         /**
          * Returns the string representation of the DateTime object in the current timezone.
+         * 
+         * @returns A string.
          */
         std::string ToString(void) const;
 
         /**
          * Returns the string representation of the DateTime object in the format specified by RFC 7231.
+         * 
+         * @returns A string.
          */
         std::string ToUTCString(void) const;
 
         /**
          * Returns the string representation of the DateTime object in the ISO 8601 format.
+         * 
+         * @returns A string.
          */
         std::string ToISO8601String(void) const;
 

@@ -78,16 +78,22 @@ namespace Vnet {
 
         /**
          * Returns true if the IP address is an IPv6 address.
+         * 
+         * @returns A boolean.
          */
         bool IsVersion6(void) const;
 
         /**
          * Returns true if the IP address is a public IP address.
+         * 
+         * @returns A boolean.
          */
         bool IsPublicAddress(void) const;
 
         /**
          * Returns true if the IP address is a private IP address.
+         * 
+         * @returns A boolean.
          */
         bool IsPrivateAddress(void) const;
 
@@ -100,6 +106,8 @@ namespace Vnet {
 
         /**
          * Returns the string representation of the IP address.
+         * 
+         * @returns A string.
          */
         std::string ToString(void) const;
 
@@ -113,7 +121,7 @@ namespace Vnet {
          * Parses a string representation of an IP address.
          * 
          * @param address A string containing an IPv4 or an IPv6 address.
-         * @returns An IpAddress object.
+         * @returns An IpAddress.
          * @exception std::invalid_argument - The 'address' parameter contains an invalid IP address.
          */
         static IpAddress Parse(const std::string_view address);
@@ -122,7 +130,7 @@ namespace Vnet {
          * Tries to parse a string representation of an IP address.
          * 
          * @param address A string containing an IPv4 or an IPv6 address.
-         * @returns If successful, an IpAddress object is returned; otherwise, std::nullopt is returned.
+         * @returns If successful, an IpAddress is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<IpAddress> TryParse(const std::string_view address);
 

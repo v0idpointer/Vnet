@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef VNET_BUILD_VNETHTTP
@@ -11,7 +11,6 @@
 
 using namespace Vnet::Http;
 
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 const HttpMethod HttpMethod::GET = { "GET" };
 const HttpMethod HttpMethod::HEAD = { "HEAD" };
 const HttpMethod HttpMethod::POST = { "POST" };

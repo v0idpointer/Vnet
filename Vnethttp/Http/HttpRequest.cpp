@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Http/HttpRequest.h>
@@ -126,11 +126,9 @@ void HttpRequest::SetHeaders(HttpHeaderCollection&& headers) noexcept {
 void HttpRequest::SetPayload(const std::span<const std::uint8_t> payload) {
     
     if (payload.empty())
-        throw std::invalid_argument("Empty payload buffer.");
+        throw std::invalid_argument("'payload': Empty buffer.");
 
-    if (payload.size() > this->m_payload.size())
-        this->ResizePayload(payload.size());
-
+    this->ResizePayload(payload.size());
     std::memcpy(this->m_payload.data(), payload.data(), payload.size());
 
 }
@@ -183,7 +181,7 @@ std::vector<std::uint8_t> HttpRequest::Serialize() const {
 std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_t> data, const bool exceptions) {
 
     if (data.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty buffer.");
+        if (exceptions) throw std::invalid_argument("'data': Empty buffer.");
         return std::nullopt;
     }
 

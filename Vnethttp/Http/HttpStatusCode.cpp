@@ -1,6 +1,6 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef VNET_BUILD_VNETHTTP
@@ -15,7 +15,6 @@
 
 using namespace Vnet::Http;
 
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 const HttpStatusCode HttpStatusCode::CONTINUE = { 100, "Continue" };
 const HttpStatusCode HttpStatusCode::SWITCHING_PROTOCOLS = { 101, "Switching Protocols" };
 const HttpStatusCode HttpStatusCode::PROCESSING = { 102, "Processing" };
@@ -141,35 +140,35 @@ std::string HttpStatusCode::ToString() const {
 std::optional<HttpStatusCode> HttpStatusCode::ParseStatusCode(std::string_view str, const bool exceptions) {
 
     if (str.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty string.");
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
         return std::nullopt;
     }
 
     std::size_t pos = 0;
     if ((pos = str.find(' ')) == std::string_view::npos) {
-        if (exceptions) throw std::runtime_error("Bad status code.");
+        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
         return std::nullopt;
     }
 
     std::int32_t statusCode = 0;
     try { statusCode = std::stoi(std::string(str.substr(0, pos))); }
     catch (const std::invalid_argument& ex) {
-        if (exceptions) throw std::runtime_error("Bad status code.");
+        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
         return std::nullopt;
     }
     catch (const std::out_of_range& ex) {
-        if (exceptions) throw std::runtime_error("Bad status code.");
+        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
         return std::nullopt;
     }
 
     if (statusCode < 0) {
-        if (exceptions) throw std::runtime_error("Bad status code.");
+        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
         return std::nullopt;
     }
     
     const std::string_view text = str.substr(pos + 1);
     if (text.empty()) {
-        if (exceptions) throw std::runtime_error("Bad status code.");
+        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
         return std::nullopt;
     }
 
