@@ -39,8 +39,24 @@ namespace Vnet::Security {
         std::unique_ptr<Vnet::Cryptography::CryptoKey> m_privateKey;
 
     public:
+
+        /**
+         * Constructs a new SecurityContext object.
+         * 
+         * The newly created security context will be invalid.
+         */
         SecurityContext(void);
+
+        /**
+         * Constructs a new SecurityContext object.
+         * 
+         * @param appType ApplicationType::CLIENT or ApplicationType::SERVER.
+         * @param protocol One or more values, bitwise OR-ed together, from the SecurityProtocol enum.
+         * If SecurityProtocol::UNSPECIFIED is provided, the default protocols will be selected.
+         * @exception SecurityException
+         */
         SecurityContext(const ApplicationType appType, const SecurityProtocol protocol);
+
         SecurityContext(const SecurityContext&) = delete;
         SecurityContext(SecurityContext&& ctx) noexcept;
         virtual ~SecurityContext(void);

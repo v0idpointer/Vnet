@@ -21,21 +21,45 @@ namespace Vnet::Net {
         std::shared_ptr<Vnet::Security::SecureConnection> m_ssl;
 
     public:
+
+        /**
+         * Constructs a new NetworkStream object.
+         * 
+         * @param socket A socket.
+         * @param ssl A secure connection.
+         */
         NetworkStream(std::shared_ptr<Vnet::Sockets::Socket> socket, std::shared_ptr<Vnet::Security::SecureConnection> ssl);
+
+        /**
+         * Constructs a new NetworkStream object by copying an existing one.
+         * 
+         * @param stream A NetworkStream object to copy.
+         */
         NetworkStream(const NetworkStream& stream);
+
         NetworkStream(NetworkStream&& stream) noexcept;
         virtual ~NetworkStream(void);
 
+        /**
+         * Assigns the value from an existing NetworkStream object to this object.
+         * 
+         * @param stream A NetworkStream object to copy.
+         */
         NetworkStream& operator= (const NetworkStream& stream);
+        
         NetworkStream& operator= (NetworkStream&& stream) noexcept;
 
         /**
          * Returns the underlying Socket object.
+         * 
+         * @returns A shared pointer to the socket.
          */
         std::shared_ptr<Vnet::Sockets::Socket> GetSocket(void) const;
 
         /**
          * Returns the underlying SecureConnection object.
+         * 
+         * @returns A shared pointer to the secure connection.
          */
         std::shared_ptr<Vnet::Security::SecureConnection> GetSecureConnection(void) const;
 

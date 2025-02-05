@@ -30,13 +30,37 @@ namespace Vnet {
         std::optional<std::string> m_fragment;
 
     public:
+
+        /**
+         * Constructs a new Uri object.
+         */
         Uri(void);
+
+        /**
+         * Constructs a new Uri object by copying an existing one.
+         * 
+         * @param uri A Uri object to copy.
+         */
         Uri(const Uri& uri);
+
         Uri(Uri&& uri) noexcept;
         virtual ~Uri(void);
 
+        /**
+         * Assigns the value from an existing Uri object to this object.
+         * 
+         * @param uri A Uri object to copy.
+         */
         Uri& operator= (const Uri& uri);
+
         Uri& operator= (Uri&& uri) noexcept;
+
+        /**
+         * Compares this Uri object with another for equality.
+         * 
+         * @param uri A Uri.
+         * @returns true if the Uri objects are equal; otherwise, false.
+         */
         bool operator== (const Uri& uri) const;
 
     public:

@@ -33,13 +33,39 @@ namespace Vnet::Http {
         std::string m_name;
 
     public:
+
+        /**
+         * Constructs a new HttpMethod object.
+         * 
+         * @param name Method name.
+         */
         HttpMethod(const std::string_view name);
+        
+        /**
+         * Constructs a new HttpMethod object by copying an existing one.
+         * 
+         * @param method An HttpMethod object to copy.
+         */
         HttpMethod(const HttpMethod& method);
+        
         HttpMethod(HttpMethod&& method) noexcept;
         virtual ~HttpMethod(void);
 
+        /**
+         * Assigns the value from an existing HttpMethod object to this object.
+         * 
+         * @param method An HttpMethod object to copy.
+         */
         HttpMethod& operator= (const HttpMethod& method);
+        
         HttpMethod& operator= (HttpMethod&& method) noexcept;
+        
+        /**
+         * Compares this HttpMethod object with another for equality.
+         * 
+         * @param An HttpMethod object to compare with.
+         * @returns true if the HttpMethod objects are equal; otherwise, false.
+         */
         bool operator== (const HttpMethod& method) const;
 
         /**

@@ -28,13 +28,37 @@ namespace Vnet::Http {
         std::vector<std::uint8_t> m_payload;
 
     public:
+
+        /**
+         * Constructs a new HttpRequest object.
+         */
         HttpRequest(void);
+        
+        /**
+         * Constructs a new HttpRequest object by copying an existing one.
+         * 
+         * @param request An HttpRequest object to copy.
+         */
         HttpRequest(const HttpRequest& request);
+        
         HttpRequest(HttpRequest&& request) noexcept;
         virtual ~HttpRequest(void);
 
+        /**
+         * Assigns the value from an existing HttpRequest object to this object.
+         * 
+         * @param request An HttpRequest object to copy.
+         */
         HttpRequest& operator= (const HttpRequest& request);
+        
         HttpRequest& operator= (HttpRequest&& request) noexcept;
+        
+        /**
+         * Compares this HttpRequest object with another for equality.
+         * 
+         * @param request An HttpRequest object to compare with.
+         * @returns true if the HttpRequest objects are equal; otherwise, false.
+         */
         bool operator== (const HttpRequest& request) const;
 
         /**

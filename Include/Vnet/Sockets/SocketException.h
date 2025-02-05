@@ -24,15 +24,40 @@ namespace Vnet::Sockets {
         std::int32_t m_errorCode;
 
     public:
+
+        /**
+         * Constructs a new SocketException object.
+         * 
+         * @param errorCode An operating system-specific error code. 
+         */
         SocketException(const std::int32_t errorCode);
+
+        /**
+         * Constructs a new SocketException object.
+         * 
+         * @param errorCode An operating system-specific error code. 
+         * @param message An error message.
+         */
         SocketException(const std::int32_t errorCode, const std::string& message);
+
+        /**
+         * Constructs a new SocketException object by copying an existing one.
+         * 
+         * @param other A SocketException object to copy.
+         */
         SocketException(const SocketException& other) noexcept;
+
         SocketException(SocketException&& other) noexcept;
         virtual ~SocketException(void);
 
         SocketException& operator= (const SocketException& other) noexcept;
         SocketException& operator= (SocketException&& other) noexcept;
 
+        /**
+         * Returns the operating system-specific error code.
+         * 
+         * @returns An integer.
+         */
         std::int32_t GetErrorCode(void) const;
 
     private:

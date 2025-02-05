@@ -26,13 +26,37 @@ namespace Vnet::Http {
         std::vector<std::uint8_t> m_payload;
 
     public:
+
+        /**
+         * Constructs a new HttpResponse object.
+         */
         HttpResponse(void);
+        
+        /**
+         * Constructs a new HttpResponse object by copying an existing one.
+         * 
+         * @param response An HttpResponse object to copy.
+         */
         HttpResponse(const HttpResponse& response);
+        
         HttpResponse(HttpResponse&& response) noexcept;
         virtual ~HttpResponse(void);
 
+        /**
+         * Assigns the value from an existing HttpResponse object to this object.
+         * 
+         * @param response An HttpResponse object to copy.
+         */
         HttpResponse& operator= (const HttpResponse& response);
+        
         HttpResponse& operator= (HttpResponse&& response) noexcept;
+        
+        /**
+         * Compares this HttpResponse object with another for equality.
+         * 
+         * @param response An HttpResponse object to compare with.
+         * @returns true if the HttpResponse objects are equal; otherwise, false.
+         */
         bool operator== (const HttpResponse& response) const;
 
         /**

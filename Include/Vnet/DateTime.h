@@ -43,39 +43,178 @@ namespace Vnet {
         std::time_t m_time;
 
     public:
+
+        /**
+         * Constructs a new DateTime object set to January 1, 1970.
+         */
         DateTime(void);
+
+        /**
+         * Constructs a new DateTime object.
+         * 
+         * @param time A Unix timestamp.
+         */
         DateTime(const std::time_t time);
+
+        /**
+         * Constructs a new DateTime object.
+         * 
+         * @param timePoint A Unix timestamp.
+         */
         DateTime(const std::chrono::time_point<std::chrono::system_clock>& timePoint);
+
+        /**
+         * Constructs a new DateTime object by copying an existing one.
+         * 
+         * @param dateTime A DateTime object to copy.
+         */
         DateTime(const DateTime& dateTime);
+
         virtual ~DateTime(void);
 
+        /**
+         * Assigns the value from an existing DateTime object to this object.
+         * 
+         * @param dateTime A DateTime object to copy.
+         */
         DateTime& operator= (const DateTime& dateTime);
+
+        /**
+         * Adds the specified date and time to this DateTime object.
+         * 
+         * @param dateTime The date and time to add, represented as a DateTime object.
+         * @returns A new DateTime object.
+         */
         DateTime operator+ (const DateTime& dateTime) const;
+
+        /**
+         * Subtracts the specified date and time from this DateTime object.
+         * 
+         * @param dateTime The date and time to subtract, represented as a DateTime object.
+         * @returns A new DateTime object.
+         */
         DateTime operator- (const DateTime& dateTime) const;
+
+        /**
+         * Adds the specified date and time to this DateTime object.
+         * 
+         * @param dateTime The date and time to add, represented as a DateTime object.
+         * @returns A reference to this DateTime object after addition.
+         */
         DateTime& operator+= (const DateTime& dateTime);
+
+        /**
+         * Subtracts the specified date and time from this DateTime object.
+         * 
+         * @param dateTime The date and time to subtract, represented as a DateTime object.
+         * @returns A reference to this DateTime object after subtraction.
+         */
         DateTime& operator-= (const DateTime& dateTime);
+        
+        /**
+         * Compares this DateTime object with another for equality.
+         * 
+         * @param dateTime A DateTime object to compare with.
+         * @returns true if the DateTime objects are equal; otherwise, false.
+         */
         bool operator== (const DateTime& dateTime) const;
+
+        /**
+         * Compares this DateTime object with another to determine if it is greater.
+         * 
+         * This operator checks if this DateTime object represents a point in time
+         * that is later than the point in time represented by the provided DateTime object.
+         * 
+         * @param dateTime A DateTime object to compare with.
+         * @returns true if this DateTime object is greater than the provided
+         * DateTime object; otherwise, false.
+         */
         bool operator> (const DateTime& dateTime) const;
+
+        /**
+         * Compares this DateTime object with another to determine if it is greater or equal.
+         * 
+         * This operator checks if this DateTime object represents a point in time
+         * that is later than or equal to the point in time represented by the provided DateTime object.
+         * 
+         * @param dateTime A DateTime object to compare with.
+         * @returns true if this DateTime object is greater than or equal to
+         * the provided DateTime object; otherwise, false.
+         */
         bool operator>= (const DateTime& dateTime) const;
+
+        /**
+         * Compares this DateTime object with another to determine if it is lesser.
+         * 
+         * This operator checks if this DateTime object represents a point in time
+         * that is earlier than the point in time represented by the provided DateTime object.
+         * 
+         * @param dateTime A DateTime object to compare with.
+         * @returns true if this DateTime object is lesser than the provided
+         * DateTime object; otherwise, false.
+         */
         bool operator< (const DateTime& dateTime) const;
+
+        /**
+         * Compares this DateTime object with another to determine if it is lesser or equal.
+         * 
+         * This operator checks if this DateTime object represents a point in time
+         * that is earlier than or equal to the point in time represented by the provided DateTime object.
+         * 
+         * @param dateTime A DateTime object to compare with.
+         * @returns true if this DateTime object is lesser than or equal to
+         * the provided DateTime object; otherwise, false.
+         */
         bool operator<= (const DateTime& dateTime) const;
 
+        /**
+         * Adds the specified time interval to this DateTime object.
+         * 
+         * @tparam Rep Represents the number of ticks.
+         * @tparam Period An std::ratio representing the tick period.
+         * @param duration The time interval to add, represented as an std::chrono::duration object.
+         * @returns A new DateTime object.
+         */
         template <typename Rep, typename Period>
         inline DateTime operator+ (const std::chrono::duration<Rep, Period>& duration) const {
             return DateTime(this->m_time + static_cast<std::time_t>(duration.count() * Period::num / Period::den));
         }
 
+        /**
+         * Subtracts the specified time interval from this DateTime object.
+         * 
+         * @tparam Rep Represents the number of ticks.
+         * @tparam Period An std::ratio representing the tick period.
+         * @param duration The time interval to subtract, represented as an std::chrono::duration object.
+         * @returns A new DateTime object.
+         */
         template <typename Rep, typename Period>
         inline DateTime operator- (const std::chrono::duration<Rep, Period>& duration) const {
             return DateTime(this->m_time - static_cast<std::time_t>(duration.count() * Period::num / Period::den));
         }
 
+        /**
+         * Adds the specified time interval to this DateTime object.
+         * 
+         * @tparam Represents the number of ticks.
+         * @tparam Period An std::ratio representing the tick period.
+         * @param duration The time interval to add, represented as an std::chrono::duration object.
+         * @returns A reference to this DateTime object after addition.
+         */
         template <typename Rep, typename Period>
         inline DateTime& operator+= (const std::chrono::duration<Rep, Period>& duration) {
             this->m_time += static_cast<std::time_t>(duration.count() * Period::num / Period::den);
             return static_cast<DateTime&>(*this);
         }
 
+        /**
+         * Subtracts the specified time interval from this DateTime object.
+         * 
+         * @tparam Rep Represents the number of ticks.
+         * @tparam Period An std::ratio representing the tick period.
+         * @param duration The time interval to subtract, represented as an std::chrono::duration object.
+         * @returns A reference to this DateTime object after subtraction.
+         */
         template <typename Rep, typename Period>
         inline DateTime& operator-= (const std::chrono::duration<Rep, Period>& duration) {
             this->m_time -= static_cast<std::time_t>(duration.count() * Period::num / Period::den);

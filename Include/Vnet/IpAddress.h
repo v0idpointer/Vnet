@@ -65,15 +65,55 @@ namespace Vnet {
         std::vector<std::uint8_t> m_bytes;
 
     public:
+
+        /**
+         * Constructs a new IpAddress object.
+         */
         IpAddress(void);
+
+        /**
+         * Constructs a new IpAddress object for an IPv4 address.
+         * 
+         * @param aa The first octet (AA.xx.xx.xx)
+         * @param bb The second octet (xx.BB.xx.xx)
+         * @param cc The third octet (xx.xx.CC.xx)
+         * @param dd The fourth octet (xx.xx.xx.DD)
+         */
         IpAddress(const std::uint8_t aa, const std::uint8_t bb, const std::uint8_t cc, const std::uint8_t dd);
+
+        /**
+         * Constructs a new IpAddress object.
+         * 
+         * @param bytes A 4-byte buffer for an IPv4 address, or a 16-byte buffer for an IPv6 address.
+         * @exception std::invalid_argument - The 'bytes' parameter contains an invalid IP address.
+         */
         IpAddress(const std::span<const std::uint8_t> bytes);
+
+        /**
+         * Constructs a new IpAddress object by copying an existing one.
+         * 
+         * @param address An IpAddress object to copy.
+         */
         IpAddress(const IpAddress& address);
+
         IpAddress(IpAddress&& address) noexcept;
         virtual ~IpAddress(void);
 
+        /**
+         * Assigns the value from an existing IpAddress object to this object.
+         * 
+         * @param address An IpAddress object to copy.
+         */
         IpAddress& operator= (const IpAddress& address);
+
         IpAddress& operator= (IpAddress&& address) noexcept;
+
+        /**
+         * Compares this IpAddress object with another for equality.
+         * 
+         * @param address An IpAddress object to compare with.
+         * @returns true if the IpAddress objects are equal; otherwise, false.
+         */
         bool operator== (const IpAddress& address) const;
 
         /**

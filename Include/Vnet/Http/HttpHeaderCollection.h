@@ -26,13 +26,37 @@ namespace Vnet::Http {
         std::list<HttpHeader> m_headers;
 
     public:
+
+        /**
+         * Constructs a new HttpHeaderCollection object.
+         */
         HttpHeaderCollection(void);
+        
+        /**
+         * Constructs a new HttpHeaderCollection object by copying an existing one.
+         * 
+         * @param headers An HttpHeaderCollection object to copy.
+         */
         HttpHeaderCollection(const HttpHeaderCollection& headers);
+        
         HttpHeaderCollection(HttpHeaderCollection&& headers) noexcept;
         virtual ~HttpHeaderCollection(void);
 
+        /**
+         * Assigns the value from an existing HttpHeaderCollection object to this object.
+         * 
+         * @param An HttpHeaderCollection object to copy.
+         */
         HttpHeaderCollection& operator= (const HttpHeaderCollection& headers);
+        
         HttpHeaderCollection& operator= (HttpHeaderCollection&& headers) noexcept;
+        
+        /**
+         * Compares this HttpHeaderCollection object with another for equality.
+         * 
+         * @param headers An HttpHeaderCollection object to compare with.
+         * @returns true if the HttpHeaderCollection objects are equal; otherwise, false.
+         */
         bool operator== (const HttpHeaderCollection& headers) const;
 
         std::list<HttpHeader>::const_iterator begin(void) const;
@@ -67,7 +91,7 @@ namespace Vnet::Http {
          * Checks if a header exists in the collection.
          * 
          * @param name Header name.
-         * @returns Returns true if the collection contains a header with the specified name.
+         * @returns true if the collection contains a header with the specified name; otherwise, false.
          */
         bool Contains(const std::string_view name) const;
 
@@ -75,7 +99,8 @@ namespace Vnet::Http {
          * Checks if a header exists in the collection.
          * 
          * @param header An HTTP header.
-         * @returns Returns true if the collection contains a header with the same name and value as the 'header' parameter.
+         * @returns true if the collection contains a header with the same name and value as the 'header' parameter;
+         * otherwise, false.
          */
         bool Contains(const HttpHeader& header) const;
 

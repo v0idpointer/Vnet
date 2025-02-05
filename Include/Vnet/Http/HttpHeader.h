@@ -24,14 +24,51 @@ namespace Vnet::Http {
         std::string m_value;
 
     public:
+
+        /**
+         * Constructs a new HttpHeader object.
+         * 
+         * The name of the newly created header is "X-Myheader",
+         * and the value is an empty string.
+         */
         HttpHeader(void);
+
+        /**
+         * Constructs a new HttpHeader object.
+         * 
+         * @param name Header name.
+         * @param value Header value.
+         * @exception std::invalid_argument - The 'name' parameter is an empty string,
+         * or 'name' contains invalid character(s), or the 'value' parameter
+         * contains invalid character(s).
+         */
         HttpHeader(const std::string_view name, const std::string_view value);
+        
+        /**
+         * Constructs a new HttpHeader object by copying an existing one.
+         * 
+         * @param header An HttpHeader object to copy.
+         */
         HttpHeader(const HttpHeader& header);
+        
         HttpHeader(HttpHeader&& header) noexcept;
         virtual ~HttpHeader(void);
 
+        /**
+         * Assigns the value from an existing HttpHeader object to this object.
+         * 
+         * @param header An HttpHeader object to copy.
+         */
         HttpHeader& operator= (const HttpHeader& header);
+        
         HttpHeader& operator= (HttpHeader&& header) noexcept;
+        
+        /**
+         * Compares this HttpHeader object with another for equality.
+         * 
+         * @param header An HttpHeader object to compare with.
+         * @returns true if the HttpHeader objects are equal; otherwise, false.
+         */
         bool operator== (const HttpHeader& header) const;
 
         /**

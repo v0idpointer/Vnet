@@ -43,28 +43,57 @@ namespace Vnet::Sockets {
         Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto);
 
     public:
+
+        /**
+         * Constructs a new Socket object.
+         * 
+         * The newly created socket will be invalid.
+         */
         Socket(void);
+
+        /**
+         * Constructs a new Socket object.
+         * 
+         * @param af A value from the AddressFamily enum.
+         * @param type A value from the SocketType enum.
+         * @param proto A value from the Protocol enum.
+         * @exception SocketException
+         */
         Socket(const AddressFamily af, const SocketType type, const Protocol proto);
+
         Socket(const Socket&) = delete;
         Socket(Socket&& socket) noexcept;
         virtual ~Socket(void);
 
-        Socket& operator= (const Socket&) = delete;
+        Socket& operator= (const Socket&) = delete;        
         Socket& operator= (Socket&& socket) noexcept;
+        
+        /**
+         * Compares this Socket object with another for equality.
+         * 
+         * @param socket A Socket to compare with.
+         * @returns true if the Socket objects are equal; otherwise, false.
+         */
         bool operator== (const Socket& socket) const;
 
         /**
          * Returns the socket's address family.
+         * 
+         * @returns An AddressFamily.
          */
         AddressFamily GetAddressFamily(void) const;
 
         /**
          * Returns the type of the socket.
+         * 
+         * @returns A SocketType.
          */
 		SocketType GetSocketType(void) const;
 
         /**
          * Returns the protocol used by the socket.
+         * 
+         * @returns A Protocol.
          */
 		Protocol GetProtocol(void) const;
 
@@ -76,7 +105,7 @@ namespace Vnet::Sockets {
          * This handle is managed by the current Socket object,
          * and manually freeing it will cause undefined behavior that can break Vnetcore.
          * 
-         * @returns NativeSocket_t
+         * @returns A NativeSocket_t
          */
 		NativeSocket_t GetNativeSocketHandle(void) const;
 
@@ -386,6 +415,7 @@ namespace Vnet::Sockets {
         /**
          * Returns the number of bytes ready to be read.
          * 
+         * @returns An integer.
          * @exception SocketException
          */
         std::int32_t GetAvailableBytes(void) const;

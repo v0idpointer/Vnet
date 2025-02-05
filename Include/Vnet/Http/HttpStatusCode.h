@@ -233,13 +233,40 @@ namespace Vnet::Http {
         std::string m_name;
 
     public:
+
+        /**
+         * Constructs a new HttpStatusCode object.
+         * 
+         * @param code
+         * @param name
+         */
         HttpStatusCode(const std::int32_t code, const std::string_view name);
+        
+        /**
+         * Constructs a new HttpStatusCode object by copying an existing one.
+         * 
+         * @param statusCode An HttpStatusCode object to copy.
+         */
         HttpStatusCode(const HttpStatusCode& statusCode);
+        
         HttpStatusCode(HttpStatusCode&& statusCode) noexcept;
         virtual ~HttpStatusCode(void);
 
+        /**
+         * Assigns the value from an existing HttpStatusCode object to this object.
+         * 
+         * @param statusCode An HttpStatusCode object to copy.
+         */
         HttpStatusCode& operator= (const HttpStatusCode& statusCode);
+        
         HttpStatusCode& operator= (HttpStatusCode&& statusCode) noexcept;
+        
+        /**
+         * Compares this HttpStatusCode object with another for equality.
+         * 
+         * @param statusCode An HttpStatusCode object to compare with.
+         * @returns true if the HttpStatusCode objects are equal; otherwise, false.
+         */
         bool operator== (const HttpStatusCode& statusCode) const;
 
         /**
