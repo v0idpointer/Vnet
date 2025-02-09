@@ -12,8 +12,15 @@ using namespace Vnet::Net;
 using namespace Vnet::Security;
 using namespace Vnet::Sockets;
 
-NetworkStream::NetworkStream(std::shared_ptr<Socket> socket, std::shared_ptr<SecureConnection> ssl)
-    : m_socket(std::move(socket)), m_ssl(std::move(ssl)) { }
+NetworkStream::NetworkStream(std::shared_ptr<Socket> socket, std::shared_ptr<SecureConnection> ssl) { 
+
+    if (socket == nullptr)
+        throw std::invalid_argument("'socket': nullptr");
+
+    this->m_socket = std::move(socket);
+    this->m_ssl = std::move(ssl);
+
+}
 
 NetworkStream::NetworkStream(const NetworkStream& stream) {
     this->operator= (stream);
@@ -55,9 +62,18 @@ std::shared_ptr<SecureConnection> NetworkStream::GetSecureConnection() const {
 
 std::int32_t NetworkStream::GetAvailableBytes() const {
 
-    if (this->m_ssl) return this->m_ssl->GetAvailableBytes();
-    else if (this->m_socket) return this->m_socket->GetAvailableBytes();
-    else throw std::runtime_error("Bad network stream.");
+    if (this->m_ssl) {
+
+        bool blocking = this->m_socket->IsBlocking();
+        this->m_socket->SetBlocking(false);
+
+        const std::int32_t available = this->m_ssl->GetAvailableBytes();
+        this->m_socket->SetBlocking(blocking);
+
+        return available;
+    }
+    
+    return this->m_socket->GetAvailableBytes();
 
 }
 
@@ -67,8 +83,7 @@ std::int32_t NetworkStream::Send(const std::span<const std::uint8_t> data, const
         throw std::invalid_argument("'flags': This value must be SocketFlags::NONE.");
 
     if (this->m_ssl) return this->m_ssl->Send(data, offset, size, flags);
-    else if (this->m_socket) return this->m_socket->Send(data, offset, size, flags);
-    else throw std::runtime_error("Bad network stream.");
+    else return this->m_socket->Send(data, offset, size, flags);
 
 }
 
@@ -90,8 +105,7 @@ std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data, const st
         throw std::invalid_argument("'flags': This value must be SocketFlags::NONE or SocketFlags::PEEK.");
 
     if (this->m_ssl) return this->m_ssl->Receive(data, offset, size, flags);
-    else if (this->m_socket) return this->m_socket->Receive(data, offset, size, flags);
-    else throw std::runtime_error("Bad network stream.");
+    else return this->m_socket->Receive(data, offset, size, flags);
 
 }
 
@@ -109,10 +123,7 @@ std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data) const {
 
 void NetworkStream::Close() {
 
-    if ((this->m_socket == nullptr) && (this->m_ssl == nullptr))
-        throw std::runtime_error("Bad network stream.");
-
     if (this->m_ssl) this->m_ssl->Close();
-    if (this->m_socket) this->m_socket->Close();
+    this->m_socket->Close();
 
 }

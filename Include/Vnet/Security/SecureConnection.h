@@ -88,6 +88,10 @@ namespace Vnet::Security {
         /**
          * Returns the number of bytes ready to be read.
          * 
+         * @note This function will block if there is no data to be read, instead of returning zero.
+         * To avoid this behavior, set the socket (the socket used to open this secure connection)
+         * to non-blocking mode before calling this function.
+         * 
          * @returns An integer.
          * @exception std::runtime_error - The secure connection is not valid.
          */
