@@ -31,6 +31,8 @@ using namespace Vnet::Cryptography;
 using namespace Vnet::Security;
 using namespace Vnet;
 
+#ifdef VNET_PLATFORM_WINDOWS
+
 const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_locations = { 
 
     { CertStoreLocation::CURRENT_SERVICE, CERT_SYSTEM_STORE_CURRENT_SERVICE },
@@ -44,6 +46,10 @@ const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_l
 
 };
 
+#else
+const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_locations = { };
+#endif
+
 CertificateStore::CertificateStore(NativeCertStore_t const certStore) : m_certStore(certStore) { }
 
 CertificateStore::CertificateStore() : CertificateStore(INVALID_CERT_STORE_HANDLE) { }
@@ -54,14 +60,20 @@ CertificateStore::CertificateStore(CertificateStore&& certStore) noexcept : Cert
 
 CertificateStore::~CertificateStore() {
 
+#ifdef VNET_PLATFORM_WINDOWS
+
     if (this->m_certStore != INVALID_CERT_STORE_HANDLE) {
         CertCloseStore(this->m_certStore, NULL);
         this->m_certStore = INVALID_CERT_STORE_HANDLE;
     }
 
+#endif
+
 }
 
 CertificateStore& CertificateStore::operator= (CertificateStore&& certStore) noexcept {
+
+#ifdef VNET_PLATFORM_WINDOWS
 
     if (this != &certStore) {
 
@@ -74,6 +86,8 @@ CertificateStore& CertificateStore::operator= (CertificateStore&& certStore) noe
         certStore.m_certStore = INVALID_CERT_STORE_HANDLE;
 
     }
+
+#endif
 
     return static_cast<CertificateStore&>(*this);
 }

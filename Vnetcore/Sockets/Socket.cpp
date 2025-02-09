@@ -12,7 +12,7 @@
 using namespace Vnet::Sockets;
 
 Socket::Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto)
-    : m_socket(socket), m_af(af), m_type(type), m_proto(proto) { }
+    : m_socket(socket), m_af(af), m_type(type), m_proto(proto), m_blocking(true) { }
 
 Socket::Socket() 
     : Socket(INVALID_SOCKET_HANDLE, static_cast<AddressFamily>(-1), static_cast<SocketType>(-1), static_cast<Protocol>(-1)) { }
@@ -49,6 +49,7 @@ Socket& Socket::operator= (Socket&& socket) noexcept {
         this->m_type = socket.m_type;
         this->m_proto = socket.m_proto;
         this->m_socket = socket.m_socket;
+        this->m_blocking = socket.m_blocking;
         socket.m_socket = INVALID_SOCKET_HANDLE;
 
     }
@@ -422,3 +423,31 @@ std::int32_t Socket::GetAvailableBytes() const {
 #endif
 
 };
+
+bool Socket::IsBlocking() const {
+    return this->m_blocking;
+}
+
+void Socket::SetBlocking(const bool blocking) {
+
+#ifdef VNET_PLATFORM_WINDOWS
+
+    u_long mode = (blocking ? 0 : 1);
+    if (ioctlsocket(this->m_socket, FIONBIO, &mode) == INVALID_SOCKET_HANDLE)
+        throw SocketException(Native::GetLastErrorCode());
+
+    this->m_blocking = blocking;
+
+#else
+
+    std::int32_t flags = fcntl(this->m_socket, F_GETFL, 0);
+    if (flags < 0) throw SocketException(Native::GetLastErrorCode());
+
+    if (blocking) fcntl(this->m_socket, F_SETFL, (flags & ~O_NONBLOCK));
+    else fcntl(this->m_socket, F_SETFL, (flags | O_NONBLOCK));
+
+    this->m_blocking = blocking;
+
+#endif
+
+}

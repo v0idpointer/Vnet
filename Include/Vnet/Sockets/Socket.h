@@ -38,6 +38,7 @@ namespace Vnet::Sockets {
         SocketType m_type;
         Protocol m_proto;
         NativeSocket_t m_socket;
+        bool m_blocking;
 
     private:
         Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto);
@@ -419,6 +420,21 @@ namespace Vnet::Sockets {
          * @exception SocketException
          */
         std::int32_t GetAvailableBytes(void) const;
+
+        /**
+         * Checks if the socket is in blocking mode.
+         * 
+         * @returns true if the socket is blocking; otherwise, false.
+         */
+        bool IsBlocking(void) const;
+
+        /**
+         * Sets the blocking mode of the socket.
+         * 
+         * @param blocking true for blocking mode, or false for non-blocking mode.
+         * @exception SocketException
+         */
+        void SetBlocking(const bool blocking);
 
     };
 

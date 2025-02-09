@@ -19,7 +19,7 @@ using namespace Vnet::Security;
 namespace std {
 
     template <>
-    struct std::hash<std::pair<std::int32_t, BlockCipherMode>> {
+    struct hash<std::pair<std::int32_t, BlockCipherMode>> {
 
         std::size_t operator() (const std::pair<std::int32_t, BlockCipherMode>& p) const noexcept {
             const std::size_t h1 = std::hash<std::int32_t>{ } (p.first);

@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <fcntl.h>
 #endif
 
 #ifndef VNET_PLATFORM_WINDOWS
