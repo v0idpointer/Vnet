@@ -28,8 +28,6 @@ namespace Vnet::Net {
         HttpStream& operator= (const HttpStream& stream);
         HttpStream& operator= (HttpStream&& stream) noexcept;
 
-        std::vector<std::uint8_t> ReadData(void) const;
-
         // ... 
 
     };

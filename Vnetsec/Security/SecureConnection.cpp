@@ -266,20 +266,51 @@ NativeSecureConnection_t SecureConnection::CreateConnection(const SecurityContex
 }
 
 SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const Socket& socket) {
-    return SecureConnection::Connect(ctx, socket.GetNativeSocketHandle(), ConnectFlags::NONE);
+    return SecureConnection::Connect(std::nullopt, ctx, socket.GetNativeSocketHandle(), ConnectFlags::NONE);
 }
 
 SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const NativeSocket_t socket) {
-    return SecureConnection::Connect(ctx, socket, ConnectFlags::NONE);
+    return SecureConnection::Connect(std::nullopt, ctx, socket, ConnectFlags::NONE);
+}
+
+SecureConnection SecureConnection::Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const Socket& socket) {
+    return SecureConnection::Connect(hostname, ctx, socket.GetNativeSocketHandle(), ConnectFlags::NONE);
+}
+
+SecureConnection SecureConnection::Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const NativeSocket_t socket) {
+    return SecureConnection::Connect(hostname, ctx, socket, ConnectFlags::NONE);
 }
 
 SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const Socket& socket, const ConnectFlags flags) {
-    return SecureConnection::Connect(ctx, socket.GetNativeSocketHandle(), flags);
+    return SecureConnection::Connect(std::nullopt, ctx, socket.GetNativeSocketHandle(), flags);
 }
 
 SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const NativeSocket_t socket, const ConnectFlags flags) {
+    return SecureConnection::Connect(std::nullopt, ctx, socket, flags);
+}
+
+SecureConnection SecureConnection::Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const Socket& socket, const ConnectFlags flags) {
+    return SecureConnection::Connect(hostname, ctx, socket.GetNativeSocketHandle(), flags);
+}
+
+SecureConnection SecureConnection::Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const NativeSocket_t socket, const ConnectFlags flags) {
+
+    if (hostname.has_value() && hostname.value().empty())
+        throw std::invalid_argument("'hostname': Empty string.");
+
+    if (flags != ConnectFlags::NONE)
+        throw std::invalid_argument("'flags': Invalid connect flag(s).");
 
     NativeSecureConnection_t ssl = SecureConnection::CreateConnection(ctx, socket);
+
+    if (hostname.has_value()) {
+
+        if (SSL_set_tlsext_host_name(ssl, hostname.value().data()) != 1) {
+            SSL_free(ssl);
+            throw SecurityException(ERR_get_error());
+        }
+
+    }
 
     if (SSL_connect(ssl) != 1) {
         SSL_free(ssl);
@@ -288,6 +319,7 @@ SecureConnection SecureConnection::Connect(const SecurityContext& ctx, const Nat
 
     return { ssl };
 }
+
 
 SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const Socket& socket) {
     return SecureConnection::Accept(ctx, socket.GetNativeSocketHandle(), AcceptFlags::NONE);
@@ -302,6 +334,9 @@ SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const Sock
 }
 
 SecureConnection SecureConnection::Accept(const SecurityContext& ctx, const NativeSocket_t socket, const AcceptFlags flags) {
+
+    if ((flags != AcceptFlags::NONE) && (flags != AcceptFlags::MUTUAL_AUTHENTICATION))
+        throw std::invalid_argument("'flags': Invalid accept flag(s).");
 
     NativeSecureConnection_t ssl = SecureConnection::CreateConnection(ctx, socket);
 
