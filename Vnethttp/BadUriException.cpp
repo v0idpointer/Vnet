@@ -1,11 +1,14 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/BadUriException.h>
 
 using namespace Vnet;
+
+BadUriException::BadUriException()
+    : BadUriException("URI malformed.") { }
 
 BadUriException::BadUriException(const std::string& message)
     : std::runtime_error(message) { }

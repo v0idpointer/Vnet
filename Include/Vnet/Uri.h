@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <cstdint>
+#include <utility>
 #include <optional>
 
 namespace Vnet {
@@ -42,6 +43,17 @@ namespace Vnet {
          * @param uri A Uri object to copy.
          */
         Uri(const Uri& uri);
+
+        /**
+         * Constructs a new Uri object by combining an absolute
+         * and a relative Uri into one.
+         * 
+         * @param absolute An absolute URI.
+         * @param relative A relative URI.
+         * @exception std::invalid_argument - The 'absolute' parameter contains
+         * a relative URI, or the 'relative' parameter contains an absolute URI.
+         */
+        Uri(const Uri& absolute, const Uri& relative);
 
         Uri(Uri&& uri) noexcept;
         virtual ~Uri(void);
@@ -89,7 +101,7 @@ namespace Vnet {
         /**
          * Returns the port number.
          * 
-         * @returns An optional unsigned 16-bit integer.
+         * @returns An optional 16-bit unsigned integer.
          */
         const std::optional<std::uint16_t> GetPort(void) const;
 
@@ -135,8 +147,16 @@ namespace Vnet {
          */
         std::string ToString(void) const;
 
+        /**
+         * Splits the URI into two URIs.
+         * 
+         * @returns A pair of URIs, the first one is an absolute URI, and the second is a relative URI.
+         */
+        std::pair<std::optional<Uri>, Uri> Split(void) const;
+
     private:
         static bool ContainsInvalidCharacters(const std::string_view uri);
+        static bool IsValidHostname(std::string_view hostname);
         static std::optional<Uri> ParseUri(std::string_view str, const bool exceptions);
 
     public:

@@ -26,6 +26,7 @@ target("Vnethttp")
     add_includedirs("Include")
     add_includedirs("Vnethttp")
     add_defines("VNET_BUILD_VNETHTTP")
+    add_deps("Vnetcore")
 
     if is_plat("windows") then 
         add_files("Vnethttp/VersionInfo.rc")
