@@ -48,13 +48,6 @@ namespace Vnet::Sockets {
         /**
          * Constructs a new Socket object.
          * 
-         * The newly created socket will be invalid.
-         */
-        Socket(void);
-
-        /**
-         * Constructs a new Socket object.
-         * 
          * @param af A value from the AddressFamily enum.
          * @param type A value from the SocketType enum.
          * @param proto A value from the Protocol enum.

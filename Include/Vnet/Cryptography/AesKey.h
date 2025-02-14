@@ -19,7 +19,6 @@ namespace Vnet::Cryptography {
         AesKey(std::vector<std::uint8_t>&& key, std::optional<std::vector<std::uint8_t>>&& iv);
 
     public:
-        AesKey(void);
         AesKey(AesKey&& key) noexcept;
         virtual ~AesKey(void);
 

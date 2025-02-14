@@ -31,10 +31,9 @@ using namespace Vnet::Cryptography;
 using namespace Vnet::Security;
 using namespace Vnet;
 
-#ifdef VNET_PLATFORM_WINDOWS
-
 const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_locations = { 
 
+#ifdef VNET_PLATFORM_WINDOWS
     { CertStoreLocation::CURRENT_SERVICE, CERT_SYSTEM_STORE_CURRENT_SERVICE },
     { CertStoreLocation::CURRENT_USER, CERT_SYSTEM_STORE_CURRENT_USER },
     { CertStoreLocation::CURRENT_USER_GP, CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY },
@@ -43,16 +42,11 @@ const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_l
     { CertStoreLocation::LOCAL_MACHINE_GP, CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY },
     { CertStoreLocation::SERVICES, CERT_SYSTEM_STORE_SERVICES },
     { CertStoreLocation::USERS, CERT_SYSTEM_STORE_USERS },
+#endif
 
 };
 
-#else
-const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_locations = { };
-#endif
-
 CertificateStore::CertificateStore(NativeCertStore_t const certStore) : m_certStore(certStore) { }
-
-CertificateStore::CertificateStore() : CertificateStore(INVALID_CERT_STORE_HANDLE) { }
 
 CertificateStore::CertificateStore(CertificateStore&& certStore) noexcept : CertificateStore(INVALID_CERT_STORE_HANDLE) {
     this->operator= (std::move(certStore));

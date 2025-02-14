@@ -15,8 +15,6 @@ using namespace Vnet::Security;
 AesKey::AesKey(std::vector<std::uint8_t>&& key, std::optional<std::vector<std::uint8_t>>&& iv) 
     : SymmetricKey(std::move(key), std::move(iv)) { }
 
-AesKey::AesKey() : SymmetricKey({ }, std::nullopt) { }
-
 AesKey::AesKey(AesKey&& key) noexcept : SymmetricKey({ }, std::nullopt) { 
     this->operator= (std::move(key));
 }

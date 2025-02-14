@@ -32,7 +32,6 @@ namespace Vnet::Cryptography::Certificates {
         CertificateStore(NativeCertStore_t const certStore);
 
     public:
-        CertificateStore(void);
         CertificateStore(const CertificateStore&) = delete;
         CertificateStore(CertificateStore&& certStore) noexcept;
         virtual ~CertificateStore(void);

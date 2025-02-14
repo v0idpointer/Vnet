@@ -24,8 +24,6 @@ using namespace Vnet::Security;
 Certificate::Certificate(NativeCertificate_t const cert, std::unique_ptr<CryptoKey>&& privateKey) noexcept
     : m_cert(cert), m_privateKey(std::move(privateKey)) { }
 
-Certificate::Certificate() : Certificate(nullptr, nullptr) { }
-
 Certificate::Certificate(Certificate&& cert) noexcept : Certificate(nullptr, nullptr) {
     this->operator= (std::move(cert));
 }

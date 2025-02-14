@@ -34,15 +34,6 @@ namespace Vnet::Security {
         SecureConnection(NativeSecureConnection_t const ssl);
 
     public:
-        
-        /**
-         * Constructs a new SecureConnection object.
-         * 
-         * The newly created secure connection will be invalid.
-         * Use SecureConnection::Connect and SecureConnection::Accept instead.
-         */
-        SecureConnection(void);
-        
         SecureConnection(const SecureConnection&) = delete;
         SecureConnection(SecureConnection&& conn) noexcept;
         virtual ~SecureConnection(void);

@@ -18,8 +18,6 @@ using namespace Vnet::Cryptography::Certificates;
 
 SecureConnection::SecureConnection(NativeSecureConnection_t const ssl) : m_ssl(ssl) { }
 
-SecureConnection::SecureConnection() : m_ssl(INVALID_SECURE_CONNECTION_HANDLE) { }
-
 SecureConnection::SecureConnection(SecureConnection&& conn) noexcept : m_ssl(INVALID_SECURE_CONNECTION_HANDLE) {
     this->operator= (std::move(conn));
 }
@@ -306,8 +304,13 @@ SecureConnection SecureConnection::Connect(const std::optional<std::string_view>
     if (hostname.has_value()) {
 
         if (SSL_set_tlsext_host_name(ssl, hostname.value().data()) != 1) {
-            SSL_free(ssl);
-            throw SecurityException(ERR_get_error());
+
+            const ErrorCode_t error = ERR_get_error();
+            if (ctx.GetSecurityProtocol() != SecurityProtocol::UNSPECIFIED) {
+                SSL_free(ssl);
+                throw SecurityException(error);
+            }
+
         }
 
     }

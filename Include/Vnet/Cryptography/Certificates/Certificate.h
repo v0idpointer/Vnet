@@ -33,7 +33,6 @@ namespace Vnet::Cryptography::Certificates {
         Certificate(NativeCertificate_t const cert, std::unique_ptr<CryptoKey>&& privateKey) noexcept;
 
     public:
-        Certificate(void);
         Certificate(const Certificate&) = delete;
         Certificate(Certificate&& cert) noexcept;
         virtual ~Certificate(void);

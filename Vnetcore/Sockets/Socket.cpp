@@ -14,9 +14,6 @@ using namespace Vnet::Sockets;
 Socket::Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto)
     : m_socket(socket), m_af(af), m_type(type), m_proto(proto), m_blocking(true) { }
 
-Socket::Socket() 
-    : Socket(INVALID_SOCKET_HANDLE, static_cast<AddressFamily>(-1), static_cast<SocketType>(-1), static_cast<Protocol>(-1)) { }
-
 Socket::Socket(const AddressFamily af, const SocketType type, const Protocol proto)
     : Socket(INVALID_SOCKET_HANDLE, af, type, proto) {
 

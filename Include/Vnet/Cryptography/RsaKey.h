@@ -20,7 +20,6 @@ namespace Vnet::Cryptography {
         RsaKey(NativeCryptoKey_t const key);
 
     public:
-        RsaKey(void);
         RsaKey(RsaKey&& key) noexcept;
         virtual ~RsaKey(void);
 

@@ -16,8 +16,6 @@ using namespace Vnet::Security;
 
 RsaKey::RsaKey(NativeCryptoKey_t const key) : CryptoKey(key) { }
 
-RsaKey::RsaKey() : RsaKey(INVALID_KEY_HANDLE) { }
-
 RsaKey::RsaKey(RsaKey&& key) noexcept : RsaKey(INVALID_KEY_HANDLE) {
     this->operator= (std::move(key));
 }

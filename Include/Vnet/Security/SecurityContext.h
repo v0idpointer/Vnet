@@ -35,17 +35,12 @@ namespace Vnet::Security {
 
     private:
         NativeSecurityContext_t m_ctx;
+        ApplicationType m_applicationType;
+        SecurityProtocol m_securityProtocol;
         std::unique_ptr<Vnet::Cryptography::Certificates::Certificate> m_cert;
         std::unique_ptr<Vnet::Cryptography::CryptoKey> m_privateKey;
 
     public:
-
-        /**
-         * Constructs a new SecurityContext object.
-         * 
-         * The newly created security context will be invalid.
-         */
-        SecurityContext(void);
 
         /**
          * Constructs a new SecurityContext object.
@@ -75,6 +70,20 @@ namespace Vnet::Security {
          * @returns A NativeSecurityContext_t.
          */
         NativeSecurityContext_t GetNativeSecurityContextHandle(void) const;
+
+        /**
+         * Returns the type of application using this security context.
+         * 
+         * @returns A value from the ApplicationType enum.
+         */
+        ApplicationType GetApplicationType(void) const;
+
+        /**
+         * Returns the selected security protocol(s).
+         * 
+         * @returns One or more values, bitwise OR-ed together, from the SecurityProtocol enum.
+         */
+        SecurityProtocol GetSecurityProtocol(void) const;
 
         /**
          * Returns the security context's X.509 certificate.
