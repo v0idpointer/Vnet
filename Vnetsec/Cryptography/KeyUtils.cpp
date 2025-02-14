@@ -24,7 +24,7 @@ std::unique_ptr<CryptoKey> KeyUtils::DuplicateKey(const CryptoKey& key) {
 
     // add other key types here.
 
-    throw std::runtime_error("Unknown key type.");
+    throw std::invalid_argument("Unknown key type.");
 }
 
 std::unique_ptr<CryptoKey> KeyUtils::ImportPEM(const std::string_view pem, const std::optional<std::string_view> password) {

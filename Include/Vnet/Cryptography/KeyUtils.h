@@ -25,7 +25,7 @@ namespace Vnet::Cryptography {
          * 
          * @param key A cryptographic key to duplicate.
          * @returns An std::unique_ptr to the duplicated key.
-         * @exception std::runtime_error - The provided key is of an unknown type.
+         * @exception std::invalid_argument - The provided key is of an unknown type.
          * @exception SecurityException - Key duplication failed.
          */
         static std::unique_ptr<CryptoKey> DuplicateKey(const CryptoKey& key);

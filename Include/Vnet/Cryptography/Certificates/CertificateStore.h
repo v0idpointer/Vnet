@@ -45,7 +45,6 @@ namespace Vnet::Cryptography::Certificates {
          * Returns all X.509 certificates from the certificate store.
          * 
          * @returns An std::vector containing heap allocated certificates.
-         * @exception std::runtime_error - The certificate store is not valid.
          * @exception SecurityException
          * @exception SystemNotSupportedException
          */
@@ -55,9 +54,7 @@ namespace Vnet::Cryptography::Certificates {
          * Adds an X.509 certificate to the certificate store.
          * 
          * @param cert An X.509 certificate.
-         * @exception std::runtime_error - The certificate store is not valid.
-         * @exception std::invalid_argument - The 'cert' parameter contains an invalid certificate,
-         * or the specified certificate is already in the certificate store.
+         * @exception std::invalid_argument - The specified certificate is already in the certificate store.
          * @exception SecurityException
          * @exception SystemNotSupportedException
          */
@@ -67,9 +64,7 @@ namespace Vnet::Cryptography::Certificates {
          * Removes an X.509 certificate from the certificate store.
          * 
          * @param cert An X.509 certificate.
-         * @exception std::runtime_error - The certificate store is not valid.
-         * @exception std::invalid_argument - The 'cert' parameter contains an invalid certificate,
-         * or the specified certificate does not exist in the certificate store.
+         * @exception std::invalid_argument - The specified certificate does not exist in the certificate store.
          * @exception SecurityException
          * @exception SystemNotSupportedException
          */

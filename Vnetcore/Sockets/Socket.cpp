@@ -5,10 +5,12 @@
 
 #include <Vnet/Sockets/Socket.h>
 #include <Vnet/Sockets/SocketException.h>
+#include <Vnet/InvalidObjectStateException.h>
 
 #include "SocketsApi.h"
 #include "Sockets/Native.h"
 
+using namespace Vnet;
 using namespace Vnet::Sockets;
 
 Socket::Socket(const NativeSocket_t socket, const AddressFamily af, const SocketType type, const Protocol proto)
@@ -76,6 +78,9 @@ NativeSocket_t Socket::GetNativeSocketHandle() const {
 
 void Socket::Close() {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
 #ifdef VNET_PLATFORM_WINDOWS
     int (*pfnClosesocket)(NativeSocket_t) = &closesocket;
 #else
@@ -90,6 +95,9 @@ void Socket::Close() {
 }
 
 void Socket::Shutdown(const ShutdownSocket how) const {
+
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
 
     std::int32_t sd = 0;
     switch (how) {
@@ -119,6 +127,9 @@ void Socket::Shutdown(const ShutdownSocket how) const {
 
 void Socket::Bind(const ISocketAddress& sockaddr) const {
     
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     struct addrinfo* result = nullptr;
     try { result = Native::CreateNativeAddrinfoFromISocketAddress(sockaddr); }
     catch (const std::invalid_argument& ex) {
@@ -137,6 +148,9 @@ void Socket::Bind(const ISocketAddress& sockaddr) const {
 
 void Socket::Connect(const ISocketAddress& sockaddr) const {
     
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     struct addrinfo* result = nullptr;
     try { result = Native::CreateNativeAddrinfoFromISocketAddress(sockaddr); }
     catch (const std::invalid_argument& ex) {
@@ -159,6 +173,9 @@ void Socket::Listen() const {
 
 void Socket::Listen(const std::int32_t backlog) const {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     if (listen(this->m_socket, backlog) == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
@@ -166,6 +183,9 @@ void Socket::Listen(const std::int32_t backlog) const {
 
 Socket Socket::Accept() const {
     
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     NativeSocket_t client = accept(this->m_socket, nullptr, nullptr);
     if (client == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
@@ -175,6 +195,9 @@ Socket Socket::Accept() const {
 
 std::int32_t Socket::Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const {
     
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -203,6 +226,9 @@ std::int32_t Socket::Send(const std::span<const std::uint8_t> data) const {
 
 std::int32_t Socket::Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -230,6 +256,9 @@ std::int32_t Socket::Receive(const std::span<std::uint8_t> data) const {
 }
 
 std::int32_t Socket::SendTo(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags, const ISocketAddress& sockaddr) const {
+
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
 
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
@@ -269,6 +298,9 @@ std::int32_t Socket::SendTo(const std::span<const std::uint8_t> data, const ISoc
 
 std::int32_t Socket::ReceiveFrom(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags, ISocketAddress& sockaddr) const {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -305,6 +337,9 @@ std::int32_t Socket::ReceiveFrom(const std::span<std::uint8_t> data, ISocketAddr
 
 void Socket::GetSocketAddress(ISocketAddress& sockaddr) const {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     struct sockaddr sockName;
     socklen_t sockNameLen = sizeof(sockName);
 
@@ -321,6 +356,9 @@ void Socket::GetSocketAddress(ISocketAddress& sockaddr) const {
 
 void Socket::GetPeerAddress(ISocketAddress& sockaddr) const {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
     struct sockaddr peerName;
     socklen_t peerNameLen = sizeof(peerName);
 
@@ -336,6 +374,9 @@ void Socket::GetPeerAddress(ISocketAddress& sockaddr) const {
 }
 
 bool Socket::Poll(const PollEvent pollEvent, const std::int32_t timeout) const {
+
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
 
     std::int32_t event = 0;
     switch (pollEvent) {
@@ -401,6 +442,9 @@ bool Socket::Poll(const PollEvent pollEvent, const std::int32_t timeout) const {
 
 std::int32_t Socket::GetAvailableBytes() const {
 
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
 #ifdef VNET_PLATFORM_WINDOWS
 
     u_long argp = 0;
@@ -426,6 +470,9 @@ bool Socket::IsBlocking() const {
 }
 
 void Socket::SetBlocking(const bool blocking) {
+
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
 
 #ifdef VNET_PLATFORM_WINDOWS
 

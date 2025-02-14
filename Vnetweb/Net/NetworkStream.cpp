@@ -4,10 +4,12 @@
 */
 
 #include <Vnet/Net/NetworkStream.h>
+#include <Vnet/InvalidObjectStateException.h>
 
 #include <exception>
 #include <stdexcept>
 
+using namespace Vnet;
 using namespace Vnet::Net;
 using namespace Vnet::Security;
 using namespace Vnet::Sockets;
@@ -62,18 +64,25 @@ std::shared_ptr<SecureConnection> NetworkStream::GetSecureConnection() const {
 
 std::int32_t NetworkStream::GetAvailableBytes() const {
 
-    if (this->m_ssl) {
+    try {
 
-        bool blocking = this->m_socket->IsBlocking();
-        this->m_socket->SetBlocking(false);
+        if (this->m_ssl) {
 
-        const std::int32_t available = this->m_ssl->GetAvailableBytes();
-        this->m_socket->SetBlocking(blocking);
-
-        return available;
-    }
+            bool blocking = this->m_socket->IsBlocking();
+            this->m_socket->SetBlocking(false);
     
-    return this->m_socket->GetAvailableBytes();
+            const std::int32_t available = this->m_ssl->GetAvailableBytes();
+            this->m_socket->SetBlocking(blocking);
+    
+            return available;
+        }
+        
+        return this->m_socket->GetAvailableBytes();
+
+    }
+    catch (const InvalidObjectStateException&) {
+        throw InvalidObjectStateException("The underlying Socket and/or SecureConnection objects are closed.");
+    }
 
 }
 
@@ -82,8 +91,13 @@ std::int32_t NetworkStream::Send(const std::span<const std::uint8_t> data, const
     if (flags != SocketFlags::NONE)
         throw std::invalid_argument("'flags': This value must be SocketFlags::NONE.");
 
-    if (this->m_ssl) return this->m_ssl->Send(data, offset, size, flags);
-    else return this->m_socket->Send(data, offset, size, flags);
+    try {
+        if (this->m_ssl) return this->m_ssl->Send(data, offset, size, flags);
+        else return this->m_socket->Send(data, offset, size, flags);
+    }
+    catch (const InvalidObjectStateException&) {
+        throw InvalidObjectStateException("The underlying Socket and/or SecureConnection objects are closed.");
+    }
 
 }
 
@@ -104,8 +118,13 @@ std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data, const st
     if ((flags != SocketFlags::NONE) && (flags != SocketFlags::PEEK))
         throw std::invalid_argument("'flags': This value must be SocketFlags::NONE or SocketFlags::PEEK.");
 
-    if (this->m_ssl) return this->m_ssl->Receive(data, offset, size, flags);
-    else return this->m_socket->Receive(data, offset, size, flags);
+    try {
+        if (this->m_ssl) return this->m_ssl->Receive(data, offset, size, flags);
+        else return this->m_socket->Receive(data, offset, size, flags);
+    }
+    catch (const InvalidObjectStateException&) {
+        throw InvalidObjectStateException("The underlying Socket and/or SecureConnection objects are closed.");
+    }
 
 }
 
@@ -123,7 +142,12 @@ std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data) const {
 
 void NetworkStream::Close() {
 
-    if (this->m_ssl) this->m_ssl->Close();
-    this->m_socket->Close();
+    try {
+        if (this->m_ssl) this->m_ssl->Close();
+        this->m_socket->Close();
+    }
+    catch (const InvalidObjectStateException&) {
+        throw InvalidObjectStateException("The underlying Socket and/or SecureConnection objects are closed.");
+    }
 
 }

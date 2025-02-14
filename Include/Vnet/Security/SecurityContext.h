@@ -89,7 +89,6 @@ namespace Vnet::Security {
          * Returns the security context's X.509 certificate.
          * 
          * @returns An optional X.509 certificate.
-         * @exception std::runtime_error - The security context is not valid.
          */
         const std::optional<std::reference_wrapper<const Cryptography::Certificates::Certificate>> GetCertificate(void) const;
 
@@ -97,7 +96,6 @@ namespace Vnet::Security {
          * Returns the security context's private key.
          * 
          * @returns An optional cryptographic key.
-         * @exception std::runtime_error - The security context is not valid.
          */
         const std::optional<std::reference_wrapper<const Cryptography::CryptoKey>> GetPrivateKey(void) const;
 
@@ -109,10 +107,8 @@ namespace Vnet::Security {
          * the current security context.
          * 
          * @param cert An X.509 certificate.
-         * @exception std::runtime_error - The security context is not valid, or the certificate's private key
-         * is of an unknown type.
-         * @exception std::invalid_argument - The 'cert' parameter contains an invalid certificate,
-         * or the provided certificate contains an invalid private key, or 'cert' is std::nullopt.
+         * @exception std::invalid_argument - The 'cert' parameter is std::nullopt,
+         * or the certificate's private key is of an unknown type.
          * @exception SecurityException
          */
         void SetCertificate(const std::optional<std::reference_wrapper<const Cryptography::Certificates::Certificate>> cert);
@@ -121,10 +117,9 @@ namespace Vnet::Security {
          * Sets a private key to be used with the security context.
          * 
          * @param privateKey A private key.
-         * @exception std::runtime_error - The security context is not valid, or the provided
-         * key is of an unknown type.
-         * @exception std::invalid_argument - The 'privateKey' parameter contains an invalid key,
-         * or 'privateKey' is std::nullopt.
+         * @exception std::invalid_argument - The 'privateKey' parameter is std::nullopt,
+         * or 'privateKey' contains a symmetric key, or 'privateKey' contains an invalid key,
+         * or 'privateKey' is of an unknown type.
          * @exception SecurityException
          */
         void SetPrivateKey(const std::optional<std::reference_wrapper<const Cryptography::CryptoKey>> privateKey);

@@ -38,7 +38,7 @@ namespace Vnet::Cryptography {
          * @param data The data to encrypt.
          * @param padding A value from the RsaEncryptionPadding enum. The exact value should later be used to decrypt the data.
          * @returns The encrypted data.
-         * @exception std::invalid_argument - The provided key is not valid, or the 'padding' parameter contains an invalid encryption padding mode.
+         * @exception std::invalid_argument - The 'padding' parameter contains an invalid encryption padding mode.
          * @exception SecurityException - Encryption failed.
          */
         static std::vector<std::uint8_t> Encrypt(const RsaKey& key, const std::span<const std::uint8_t> data, const RsaEncryptionPadding padding);
@@ -50,9 +50,8 @@ namespace Vnet::Cryptography {
          * @param data The data to decrypt.
          * @param padding The padding used to encrypt the data.
          * @returns The decrypted data.
-         * @exception std::invalid_argument - The provided key is not valid, 
-         * or a public key is provided instead of a private key, or the 'padding' parameter
-         * contains an invalid encryption padding mode.
+         * @exception std::invalid_argument - A public key is provided instead of a private key, 
+         * or the 'padding' parameter contains an invalid encryption padding mode.
          * @exception SecurityException - Decryption failed.
          */
         static std::vector<std::uint8_t> Decrypt(const RsaKey& privateKey, const std::span<const std::uint8_t> encryptedData, const RsaEncryptionPadding padding);
@@ -66,8 +65,7 @@ namespace Vnet::Cryptography {
          * @param padding A value from the RsaSignaturePadding enum.
          * @returns The signed data.
          * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid hash algorithm,
-         * or the provided key is not valid, or a public key is provided instead of a private key,
-         * or the 'padding' parameter contains an invalid signature padding mode.
+         * or a public key is provided instead of a private key, or the 'padding' parameter contains an invalid signature padding mode.
          * @exception SecurityException - Hash function failed, or signing failed.
          */
         static std::vector<std::uint8_t> Sign(
@@ -86,8 +84,7 @@ namespace Vnet::Cryptography {
          * @param padding A value from the RsaSignaturePadding enum.
          * @returns The signed data.
          * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid hash algorithm,
-         * or the provided key is not valid, or a public key is provided instead of a private key,
-         * or the 'padding' parameter contains an invalid signature padding mode.
+         * or a public key is provided instead of a private key, or the 'padding' parameter contains an invalid signature padding mode.
          * @exception SecurityException - Signing failed.
          */
         static std::vector<std::uint8_t> SignHashed(
@@ -107,7 +104,7 @@ namespace Vnet::Cryptography {
          * @param padding The padding used to sign the data.
          * @returns true if the signature is valid; otherwise, false.
          * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid hash algorithm,
-         * or the provided key is not valid, or the 'padding' parameter contains an invalid signature padding mode.
+         * or the 'padding' parameter contains an invalid signature padding mode.
          * @exception SecurityException - Hash function failed, or verification failed.
          */
         static bool Verify(
@@ -128,7 +125,7 @@ namespace Vnet::Cryptography {
          * @param padding The padding used to sign the data.
          * @returns true if the signature is valid; otherwise, false.
          * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid hash algorithm,
-         * or the provided key is not valid, or the 'padding' parameter contains an invalid signature padding mode.
+         * or the 'padding' parameter contains an invalid signature padding mode.
          * @exception SecurityException - Verification failed.
          */
         static bool VerifyHashed(

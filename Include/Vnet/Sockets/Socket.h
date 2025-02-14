@@ -107,6 +107,7 @@ namespace Vnet::Sockets {
          * Closes the socket.
          * 
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void Close(void);
 
@@ -116,6 +117,7 @@ namespace Vnet::Sockets {
          * @param how What operation to disable.
          * @exception std::invalid_argument - The 'how' parameter contains an invalid value.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void Shutdown(const ShutdownSocket how) const;
 
@@ -125,6 +127,7 @@ namespace Vnet::Sockets {
          * @param sockaddr A reference to an ISocketAddress that stores the local address.
          * @exception std::invalid_argument - The 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void Bind(const ISocketAddress& sockaddr) const;
 
@@ -134,6 +137,7 @@ namespace Vnet::Sockets {
          * @param sockaddr A reference to an ISocketAddress that stores the remote socket's address.
          * @exception std::invalid_argument - The 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void Connect(const ISocketAddress& sockaddr) const;
 
@@ -142,6 +146,7 @@ namespace Vnet::Sockets {
          * Places the socket in a listening state.
          * 
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void Listen(void) const;
 
@@ -150,6 +155,7 @@ namespace Vnet::Sockets {
          * 
          * @param backlog The maximum length of the pending connections queue.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void Listen(const std::int32_t backlog) const;
 
@@ -158,6 +164,7 @@ namespace Vnet::Sockets {
          * 
          * @returns A newly created Socket for the new connection.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         Socket Accept(void) const;
 
@@ -174,6 +181,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const;
         
@@ -188,6 +196,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
         
@@ -199,6 +208,7 @@ namespace Vnet::Sockets {
          * @returns The number of bytes sent.
          * @exception std::invalid_argument - The 'flags' parameter contains an invalid socket flag.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data, const SocketFlags flags) const;
         
@@ -208,6 +218,7 @@ namespace Vnet::Sockets {
          * @param data The data to be sent.
          * @returns The number of bytes sent.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data) const;
 
@@ -224,6 +235,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const;
         
@@ -238,6 +250,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
         
@@ -249,6 +262,7 @@ namespace Vnet::Sockets {
          * @returns The number of bytes read.
          * @exception std::invalid_argument - The 'flags' parameter contains an invalid socket flag.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data, const SocketFlags flags) const;
         
@@ -258,6 +272,7 @@ namespace Vnet::Sockets {
          * @param data The buffer where the read data will be stored.
          * @returns The number of bytes read.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data) const;
 
@@ -276,6 +291,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t SendTo(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags, const ISocketAddress& sockaddr) const;
         
@@ -292,6 +308,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t SendTo(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const ISocketAddress& sockaddr) const;
         
@@ -305,6 +322,7 @@ namespace Vnet::Sockets {
          * @exception std::invalid_argument - The 'flags' parameter contains an invalid socket flag,
          * or the 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t SendTo(const std::span<const std::uint8_t> data, const SocketFlags flags, const ISocketAddress& sockaddr) const;
         
@@ -316,6 +334,7 @@ namespace Vnet::Sockets {
          * @returns The number of bytes sent.
          * @exception std::invalid_argument - The 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException - Failed to send the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t SendTo(const std::span<const std::uint8_t> data, const ISocketAddress& sockaddr) const;
 
@@ -334,6 +353,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t ReceiveFrom(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags, ISocketAddress& sockaddr) const;
         
@@ -350,6 +370,7 @@ namespace Vnet::Sockets {
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t ReceiveFrom(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, ISocketAddress& sockaddr) const;
 
@@ -363,6 +384,7 @@ namespace Vnet::Sockets {
          * @exception std::invalid_argument - The 'flags' parameter contains an invalid socket flag,
          * or the 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t ReceiveFrom(const std::span<std::uint8_t> data, const SocketFlags flags, ISocketAddress& sockaddr) const;
 
@@ -374,6 +396,7 @@ namespace Vnet::Sockets {
          * @returns The number of bytes read.
          * @exception std::invalid_argument - The 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException - Failed to read the data.
+         * @exception InvalidObjectStateException - The socket is closed.
          */
         std::int32_t ReceiveFrom(const std::span<std::uint8_t> data, ISocketAddress& sockaddr) const;
 
@@ -383,6 +406,7 @@ namespace Vnet::Sockets {
          * @param sockaddr A reference to an ISocketAddress that will store the socket address.
          * @exception std::invalid_argument - The 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void GetSocketAddress(ISocketAddress& sockaddr) const;
 
@@ -392,6 +416,7 @@ namespace Vnet::Sockets {
          * @param sockaddr A reference to an ISocketAddress that will store the socket address.
          * @exception std::invalid_argument - The 'sockaddr' parameter points to an unknown ISocketAddress implementation.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void GetPeerAddress(ISocketAddress& sockaddr) const;
 
@@ -403,6 +428,7 @@ namespace Vnet::Sockets {
          * @returns A boolean representing the status of the socket.
          * @exception std::invalid_argument - The 'pollEvent' parameter contains an invalid value.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         bool Poll(const PollEvent pollEvent, const std::int32_t timeout) const;
 
@@ -411,6 +437,7 @@ namespace Vnet::Sockets {
          * 
          * @returns An integer.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         std::int32_t GetAvailableBytes(void) const;
 
@@ -426,6 +453,7 @@ namespace Vnet::Sockets {
          * 
          * @param blocking true for blocking mode, or false for non-blocking mode.
          * @exception SocketException
+         * @exception InvalidObjectStateException
          */
         void SetBlocking(const bool blocking);
 

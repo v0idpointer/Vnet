@@ -68,8 +68,8 @@ namespace Vnet::Net {
          * Returns the number of bytes ready to be read.
          * 
          * @returns An integer.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception SocketException - Failed to get the number of available bytes.
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t GetAvailableBytes(void) const;
 
@@ -81,13 +81,13 @@ namespace Vnet::Net {
          * @param size The number of bytes to send.
          * @param flags Socket flags. This value must be SocketFlags::NONE.
          * @returns The number of bytes sent.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception std::invalid_argument - The 'flags' parameter is not SocketFlags::NONE.
          * @exception std::out_of_range - The 'offset' parameter is less than zero, or
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to send the data (using Socket).
          * @exception SecurityException - Failed to send the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Vnet::Sockets::SocketFlags flags) const;
 
@@ -98,12 +98,12 @@ namespace Vnet::Net {
          * @param offset The position in the data buffer from where to start sending.
          * @param size The number of bytes to send.
          * @returns The number of bytes sent.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception std::out_of_range - The 'offset' parameter is less than zero, or
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to send the data (using Socket).
          * @exception SecurityException - Failed to send the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
 
@@ -113,10 +113,10 @@ namespace Vnet::Net {
          * @param data The data to be sent.
          * @param flags Socket flags. This value must be SocketFlags::NONE.
          * @returns The number of bytes sent.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception std::invalid_argument - The 'flags' parameter is not SocketFlags::NONE.
          * @exception SocketException - Failed to send the data (using Socket).
          * @exception SecurityException - Failed to send the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data, const Vnet::Sockets::SocketFlags flags) const;
 
@@ -125,9 +125,9 @@ namespace Vnet::Net {
          * 
          * @param data The data to be sent.
          * @returns The number of bytes sent.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception SocketException - Failed to send the data (using Socket).
          * @exception SecurityException - Failed to send the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Send(const std::span<const std::uint8_t> data) const;
 
@@ -139,13 +139,13 @@ namespace Vnet::Net {
          * @param size The number of bytes to read.
          * @param flags Socket flags. This can be SocketFlags::NONE or SocketFlags::PEEK.
          * @returns The number of bytes read.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception std::invalid_argument - The 'flags' parameter is not SocketFlags::NONE or SocketFlags::PEEK.
          * @exception std::out_of_range - The 'offset' parameter is less than zero, or
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to read the data (using Socket).
          * @exception SecurityException - Failed to read the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Vnet::Sockets::SocketFlags flags) const;
 
@@ -156,12 +156,12 @@ namespace Vnet::Net {
          * @param offset The position in the data buffer where to store the read data.
          * @param size The number of bytes to read.
          * @returns The number of bytes read.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception std::out_of_range - The 'offset' parameter is less than zero, or
          * 'offset' is greater than the buffer size, or the 'size' parameter is less than zero,
          * or 'size' is greater than the buffer size minus 'offset'.
          * @exception SocketException - Failed to read the data (using Socket).
          * @exception SecurityException - Failed to read the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
 
@@ -171,10 +171,10 @@ namespace Vnet::Net {
          * @param data The buffer where the read data will be stored.
          * @param flags Socket flags. This can be SocketFlags::NONE or SocketFlags::PEEK.
          * @returns The number of bytes read.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception std::invalid_argument - The 'flags' parameter is not SocketFlags::NONE or SocketFlags::PEEK.
          * @exception SocketException - Failed to read the data (using Socket).
          * @exception SecurityException - Failed to read the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data, const Vnet::Sockets::SocketFlags flags) const;
 
@@ -183,18 +183,18 @@ namespace Vnet::Net {
          * 
          * @param data The buffer where the read data will be stored.
          * @returns The number of bytes read.
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception SocketException - Failed to read the data (using Socket).
          * @exception SecurityException - Failed to read the data (using SecureConnection).
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         std::int32_t Receive(const std::span<std::uint8_t> data) const;
 
         /**
          * Shuts down the SSL/TLS connection and closes the socket.
          * 
-         * @exception std::runtime_error - The underlying SecureConnection object is invalid.
          * @exception SocketException - An error has occurred while closing the socket.
          * @exception SecurityException - An error has occurred while shutting down the SSL/TLS connection.
+         * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
         void Close(void);
 
