@@ -6,7 +6,6 @@
 #ifndef _VNETHTTP_HTTP_HTTPHEADERCOLLECTION_H_
 #define _VNETHTTP_HTTP_HTTPHEADERCOLLECTION_H_
 
-#include <Vnet/Exports.h>
 #include <Vnet/Http/HttpHeader.h>
 
 #include <list>
@@ -120,8 +119,8 @@ namespace Vnet::Http {
          * a special set of HTTP headers (for example Set-Cookie).
          * @exception std::runtime_error - Append failed (internal error).
          * @exception std::invalid_argument - The 'name' parameter is an empty string,
-         * or 'name' contains invalid character(s), or the 'value' parameter is an empty
-         * string, or 'value' contains invalid character(s).
+         * or 'name' contains an invalid header name, or the 'value' parameter
+         * contains an invalid header value.
          */
         void Add(const std::string_view name, const std::string_view value, const bool force);
         
@@ -132,8 +131,8 @@ namespace Vnet::Http {
          * @param value Header value.
          * @exception std::runtime_error - Append failed (internal error).
          * @exception std::invalid_argument - The 'name' parameter is an empty string,
-         * or 'name' contains invalid character(s), or the 'value' parameter is an empty
-         * string, or 'value' contains invalid character(s).
+         * or 'name' contains an invalid header name, or the 'value' parameter
+         * contains an invalid header value.
          */
         void Add(const std::string_view name, const std::string_view value);
         
@@ -163,8 +162,8 @@ namespace Vnet::Http {
          * @param name Header name.
          * @param value Header value.
          * @exception std::invalid_argument - The 'name' parameter is an empty string,
-         * or 'name' contains invalid character(s), or the 'value' parameter is an empty
-         * string, or 'value' contains invalid character(s).
+         * or 'name' contains an invalid header name, or the 'value' parameter
+         * contains an invalid header value.
          */
         void Set(const std::string_view name, const std::string_view value);
         
@@ -211,27 +210,47 @@ namespace Vnet::Http {
         std::string ToString(void) const;
 
     private:
-        static std::optional<HttpHeaderCollection> ParseHeaders(std::string_view str, const bool exceptions);
+        static std::optional<HttpHeaderCollection> ParseHeaders(std::string_view str, const HttpParserOptions& options, const bool exceptions);
 
     public:
 
         /**
          * Parses a collection of HTTP headers.
          * 
-         * @param str
+         * @param str A string containing one or more HTTP headers, separated by CRLF.
          * @returns An HttpHeaderCollection.
-         * @exception std::runtime_error - One or more bad HTTP headers.
          * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing a collection of HTTP headers.
          */
         static HttpHeaderCollection Parse(const std::string_view str);
 
         /**
+         * Parses a collection of HTTP headers.
+         * 
+         * @param str A string containing one or more HTTP headers, separated by CRLF.
+         * @param options Options for the HTTP parser.
+         * @returns An HttpHeaderCollection.
+         * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing a collection of HTTP headers.
+         */
+        static HttpHeaderCollection Parse(const std::string_view str, const HttpParserOptions& options);
+
+        /**
          * Tries to parse a collection of HTTP headers.
          * 
-         * @param str
+         * @param str A string containing one or more HTTP headers, separated by CRLF.
          * @returns If successful, an HttpHeaderCollection is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<HttpHeaderCollection> TryParse(const std::string_view str);
+
+        /**
+         * Tries to parse a collection of HTTP headers.
+         * 
+         * @param str A string containing one or more HTTP headers, separated by CRLF.
+         * @param options Options for the HTTP parser.
+         * @returns If successful, an HttpHeaderCollection is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpHeaderCollection> TryParse(const std::string_view str, const HttpParserOptions& options);
 
     };
 

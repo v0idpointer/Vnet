@@ -8,10 +8,10 @@
 #endif
 
 #include <Vnet/Http/HttpStatusCode.h>
+#include <Vnet/Http/HttpParserException.h>
 
 #include <sstream>
-#include <exception>
-#include <stdexcept>
+#include <algorithm>
 
 using namespace Vnet::Http;
 
@@ -82,9 +82,9 @@ const HttpStatusCode HttpStatusCode::LOOP_DETECTED = { 508, "Loop Detected" };
 const HttpStatusCode HttpStatusCode::NOT_EXTENDED = { 510, "Not Extended" };
 const HttpStatusCode HttpStatusCode::NETWORK_AUTHENTICATION_REQUIRED = { 511, "Network Authentication Required" };
 
-HttpStatusCode::HttpStatusCode(const std::int32_t code, const std::string_view name) {
-    this->m_code = code;
-    this->m_name = name;
+HttpStatusCode::HttpStatusCode(const std::int32_t code, const std::string_view reasonPhrase) {
+    this->SetCode(code);
+    this->SetReasonPhrase(reasonPhrase);
 }
 
 HttpStatusCode::HttpStatusCode(const HttpStatusCode& statusCode) {
@@ -101,7 +101,7 @@ HttpStatusCode& HttpStatusCode::operator= (const HttpStatusCode& statusCode) {
 
     if (this != &statusCode) {
         this->m_code = statusCode.m_code;
-        this->m_name = statusCode.m_name;
+        this->m_reasonPhrase = statusCode.m_reasonPhrase;
     }
 
     return static_cast<HttpStatusCode&>(*this);
@@ -111,7 +111,7 @@ HttpStatusCode& HttpStatusCode::operator= (HttpStatusCode&& statusCode) noexcept
 
     if (this != &statusCode) {
         this->m_code = statusCode.m_code;
-        this->m_name = std::move(statusCode.m_name);
+        this->m_reasonPhrase = std::move(statusCode.m_reasonPhrase);
     }
 
     return static_cast<HttpStatusCode&>(*this);
@@ -119,7 +119,7 @@ HttpStatusCode& HttpStatusCode::operator= (HttpStatusCode&& statusCode) noexcept
 
 bool HttpStatusCode::operator== (const HttpStatusCode& statusCode) const {
     if (this->m_code != statusCode.m_code) return false;
-    if (this->m_name != statusCode.m_name) return false;
+    if (this->m_reasonPhrase != statusCode.m_reasonPhrase) return false;
     return true;
 }
 
@@ -127,17 +127,44 @@ const std::int32_t HttpStatusCode::GetCode() const {
     return this->m_code;
 }
 
-const std::string& HttpStatusCode::GetName() const {
-    return this->m_name;
+const std::string& HttpStatusCode::GetReasonPhrase() const {
+    return this->m_reasonPhrase;
+}
+
+void HttpStatusCode::SetCode(const std::int32_t code) {
+
+    if (code < 0)
+        throw std::invalid_argument("'code': Invalid numerical status code.");
+
+    this->m_code = code;
+
+}
+
+void HttpStatusCode::SetReasonPhrase(const std::string_view reasonPhrase) {
+
+    if (reasonPhrase.empty())
+        throw std::invalid_argument("'reasonPhrase': Empty string.");
+
+    std::string_view::const_iterator it;
+    it = std::find_if(reasonPhrase.begin(), reasonPhrase.end(), [] (const char ch) -> bool {
+        if ((ch >= 0x20) && (ch < 0x7F)) return false;
+        else return true;
+    });
+
+    if (it != reasonPhrase.end())
+        throw std::invalid_argument("'reasonPhrase': Invalid reason phrase.");
+
+    this->m_reasonPhrase = reasonPhrase;
+
 }
 
 std::string HttpStatusCode::ToString() const {
     std::ostringstream stream;
-    stream << this->GetCode() << " " << this->GetName();
+    stream << this->GetCode() << " " << this->GetReasonPhrase();
     return stream.str();
 }
 
-std::optional<HttpStatusCode> HttpStatusCode::ParseStatusCode(std::string_view str, const bool exceptions) {
+std::optional<HttpStatusCode> HttpStatusCode::ParseStatusCode(std::string_view str, const HttpParserOptions& options, const bool exceptions) {
 
     if (str.empty()) {
         if (exceptions) throw std::invalid_argument("'str': Empty string.");
@@ -146,39 +173,123 @@ std::optional<HttpStatusCode> HttpStatusCode::ParseStatusCode(std::string_view s
 
     std::size_t pos = 0;
     if ((pos = str.find(' ')) == std::string_view::npos) {
-        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad response status code.", 
+            std::nullopt
+        );
+        
         return std::nullopt;
     }
 
-    std::int32_t statusCode = 0;
-    try { statusCode = std::stoi(std::string(str.substr(0, pos))); }
+    std::int32_t code = 0;
+    try { code = std::stoi(std::string(str.substr(0, pos))); }
     catch (const std::invalid_argument& ex) {
-        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad response status code: invalid value.", 
+            std::nullopt
+        );
+        
         return std::nullopt;
     }
     catch (const std::out_of_range& ex) {
-        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad response status code: value out of range.", 
+            std::nullopt
+        );
+        
         return std::nullopt;
     }
 
-    if (statusCode < 0) {
-        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
+    if (options.RestrictResponseStatusCodesToPredefinedClasses && ((code < 100) || (code >= 600))) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad response status code: value out of range.", 
+            std::nullopt
+        );
+
         return std::nullopt;
     }
-    
+
     const std::string_view text = str.substr(pos + 1);
-    if (text.empty()) {
-        if (exceptions) throw std::runtime_error("Bad HTTP status code.");
+    if (options.MaxResponseStatusCodeReasonPhraseLength && (text.length() > *options.MaxResponseStatusCodeReasonPhraseLength)) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad response status code: reason phrase too long.", 
+            std::nullopt
+        );
+
         return std::nullopt;
     }
 
-    return HttpStatusCode(statusCode, text);
+    std::optional<HttpStatusCode> statusCode;
+    try { statusCode = { code, text }; }
+    catch (const std::invalid_argument& ex) {
+
+        std::size_t pos = 0;
+        std::string msg = ex.what();
+        if ((pos = msg.find(": ")) != std::string::npos)
+            msg = msg.substr(pos + 2);
+
+        if (!msg.empty()) {
+            char& ch = msg.front();
+            if ((ch >= 'A') && (ch <= 'Z')) ch += ('a' - 'A');
+        }
+
+        if (exceptions) throw HttpParserException(
+            ("HTTP parser error: bad response status code: " + msg),
+            std::nullopt
+        );
+
+        return std::nullopt;
+    }
+
+    return statusCode.value();
 }
 
 HttpStatusCode HttpStatusCode::Parse(const std::string_view str) {
-    return HttpStatusCode::ParseStatusCode(str, true).value();
+    return HttpStatusCode::Parse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+HttpStatusCode HttpStatusCode::Parse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpStatusCode::ParseStatusCode(str, options, true).value();
 }
 
 std::optional<HttpStatusCode> HttpStatusCode::TryParse(const std::string_view str) {
-    return HttpStatusCode::ParseStatusCode(str, false);
+    return HttpStatusCode::TryParse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+std::optional<HttpStatusCode> HttpStatusCode::TryParse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpStatusCode::ParseStatusCode(str, options, false);
+}
+
+bool HttpStatusCode::IsStandardResponseCode(const HttpStatusCode& statusCode) {
+
+    const std::int32_t code = statusCode.GetCode();
+
+    // informational responses
+    if ((code >= 100) && (code <= 103)) return true;
+
+    // successful responses
+    if ((code >= 200) && (code <= 208)) return true;
+    if (code == 226) return true;
+
+    // redirection messages:
+    if ((code >= 300) && (code <= 305)) return true;
+    if ((code == 307) || (code == 308)) return true;
+
+    // client error responses:
+    if ((code >= 400) && (code <= 418)) return true;
+    if ((code >= 421) && (code <= 426)) return true;
+    if ((code == 428) || (code == 429)) return true;
+    if (code == 431) return true;
+    if (code == 451) return true;
+
+    // server error responses:
+    if ((code >= 500) && (code <= 508)) return true;
+    if ((code == 510) || (code == 511)) return true;
+
+    return false;
 }

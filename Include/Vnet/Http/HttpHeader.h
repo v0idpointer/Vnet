@@ -6,11 +6,10 @@
 #ifndef _VNETHTTP_HTTP_HTTPHEADER_H_
 #define _VNETHTTP_HTTP_HTTPHEADER_H_
 
-#include <Vnet/Exports.h>
+#include <Vnet/Http/HttpParserOptions.h>
 
 #include <string>
 #include <string_view>
-#include <optional>
 
 namespace Vnet::Http {
     
@@ -28,7 +27,7 @@ namespace Vnet::Http {
         /**
          * Constructs a new HttpHeader object.
          * 
-         * The name of the newly created header is "X-Myheader",
+         * The name of the newly created header is "x-my-header",
          * and the value is an empty string.
          */
         HttpHeader(void);
@@ -39,8 +38,8 @@ namespace Vnet::Http {
          * @param name Header name.
          * @param value Header value.
          * @exception std::invalid_argument - The 'name' parameter is an empty string,
-         * or 'name' contains invalid character(s), or the 'value' parameter
-         * contains invalid character(s).
+         * or 'name' contains an invalid header name, or the 'value' parameter
+         * contains an invalid header value.
          */
         HttpHeader(const std::string_view name, const std::string_view value);
         
@@ -90,7 +89,7 @@ namespace Vnet::Http {
          * 
          * @param name Header name.
          * @exception std::invalid_argument - The 'name' parameter is an empty string,
-         * or 'name' contains invalid character(s).
+         * or 'name' contains an invalid header name.
          */
         void SetName(const std::string_view name);
 
@@ -98,7 +97,7 @@ namespace Vnet::Http {
          * Sets the header value.
          * 
          * @param value Header value.
-         * @exception std::invalid_argument - The 'value' parameter contains invalid character(s).
+         * @exception std::invalid_argument - The 'value' parameter contains an invalid header value.
          */
         void SetValue(const std::string_view value);
 
@@ -110,27 +109,47 @@ namespace Vnet::Http {
         std::string ToString(void) const;
 
     private:
-        static std::optional<HttpHeader> ParseHeader(std::string_view str, const bool exceptions);
+        static std::optional<HttpHeader> ParseHeader(std::string_view str, const HttpParserOptions& options, const bool exceptions);
 
     public:
 
         /**
          * Parses an HTTP header.
          * 
-         * @param str
+         * @param str A string containing an HTTP header.
          * @returns An HttpHeader.
-         * @exception std::runtime_error - Bad HTTP header.
          * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP header.
          */
         static HttpHeader Parse(const std::string_view str);
 
         /**
+         * Parses an HTTP header.
+         * 
+         * @param str A string containing an HTTP header.
+         * @param options Options for the HTTP parser.
+         * @returns An HttpHeader.
+         * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP header.
+         */
+        static HttpHeader Parse(const std::string_view str, const HttpParserOptions& options);
+
+        /**
          * Tries to parse an HTTP header.
          * 
-         * @param str
+         * @param str A string containing an HTTP header.
          * @returns If successful, an HttpHeader is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<HttpHeader> TryParse(const std::string_view str);
+
+        /**
+         * Tries to parse an HTTP header.
+         * 
+         * @param str A string containing an HTTP header.
+         * @param options Options for the HTTP parser.
+         * @returns If successful, an HttpHeader is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpHeader> TryParse(const std::string_view str, const HttpParserOptions& options);
 
     };
 

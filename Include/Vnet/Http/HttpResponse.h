@@ -171,7 +171,8 @@ namespace Vnet::Http {
         std::vector<std::uint8_t> Serialize(void) const;
 
     private:
-        static std::optional<HttpResponse> ParseResponse(std::span<const std::uint8_t> data, const bool exceptions);
+        static std::size_t ParseContentLength(const std::string_view str);
+        static std::optional<HttpResponse> ParseResponse(std::span<const std::uint8_t> data, const HttpParserOptions& options, const bool exceptions);
 
     public:
 
@@ -180,11 +181,21 @@ namespace Vnet::Http {
          * 
          * @param data A data buffer containing a serialized HttpResponse object.
          * @returns An HttpResponse.
-         * @exception std::runtime_error - Bad HTTP response, or unsupported HTTP version,
-         * or one or more bad HTTP headers.
          * @exception std::invalid_argument - The 'data' parameter is an empty buffer.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP response.
          */
         static HttpResponse Parse(const std::span<const std::uint8_t> data);
+
+        /**
+         * Parses an HTTP response message.
+         * 
+         * @param data A data buffer containing a serialized HttpResponse object.
+         * @param options Options for the HTTP parser.
+         * @returns An HttpResponse.
+         * @exception std::invalid_argument - The 'data' parameter is an empty buffer.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP response.
+         */
+        static HttpResponse Parse(const std::span<const std::uint8_t> data, const HttpParserOptions& options);
 
         /**
          * Tries to parse an HTTP response message.
@@ -193,6 +204,15 @@ namespace Vnet::Http {
          * @returns If successful, an HttpResponse is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<HttpResponse> TryParse(const std::span<const std::uint8_t> data);
+
+        /**
+         * Tries to parse an HTTP response message.
+         * 
+         * @param data A data buffer containing a serialized HttpResponse object.
+         * @param options Options for the HTTP parser.
+         * @returns If successful, an HttpResponse is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpResponse> TryParse(const std::span<const std::uint8_t> data, const HttpParserOptions& options);
 
     };
 

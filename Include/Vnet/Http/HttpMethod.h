@@ -6,7 +6,7 @@
 #ifndef _VNETHTTP_HTTP_HTTPMETHOD_H_
 #define _VNETHTTP_HTTP_HTTPMETHOD_H_
 
-#include <Vnet/Exports.h>
+#include <Vnet/Http/HttpParserOptions.h>
 
 #include <string>
 #include <string_view>
@@ -38,6 +38,8 @@ namespace Vnet::Http {
          * Constructs a new HttpMethod object.
          * 
          * @param name Method name.
+         * @exception std::invalid_argument - The 'name' parameter is an empty string,
+         * or 'name' contains an invalid request method name.
          */
         HttpMethod(const std::string_view name);
         
@@ -76,11 +78,70 @@ namespace Vnet::Http {
         const std::string& GetName(void) const;
 
         /**
+         * Sets the request method name.
+         * 
+         * @param name Method name.
+         * @exception std::invalid_argument - The 'name' parameter is an empty string,
+         * or 'name' contains an invalid request method name.
+         */
+        void SetName(const std::string_view name);
+
+        /**
          * Returns the string representation of the HttpMethod object.
          * 
          * @returns A string. 
          */
         std::string ToString(void) const;
+
+    private:
+        static std::optional<HttpMethod> ParseMethod(const std::string_view str, const HttpParserOptions& options, const bool exceptions);
+
+    public:
+
+        /**
+         * Parses an HTTP request method.
+         * 
+         * @param str A string containing an HTTP request method.
+         * @returns An HttpMethod.
+         * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP request method.
+         */
+        static HttpMethod Parse(const std::string_view str);
+
+        /**
+         * Parses an HTTP request method.
+         * 
+         * @param str A string containing an HTTP request method.
+         * @param options Options for the HTTP parser.
+         * @returns An HttpMethod.
+         * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP request method.
+         */
+        static HttpMethod Parse(const std::string_view str, const HttpParserOptions& options);
+
+        /**
+         * Tries to parse an HTTP request method.
+         * 
+         * @param str A string containing an HTTP request method.
+         * @returns If successful, an HttpMethod is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpMethod> TryParse(const std::string_view str);
+
+        /**
+         * Tries to parse an HTTP request method.
+         * 
+         * @param str A string containing an HTTP request method.
+         * @param options Options for the HTTP parser.
+         * @returns If successful, an HttpMethod is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpMethod> TryParse(const std::string_view str, const HttpParserOptions& options);
+
+        /**
+         * 
+         * 
+         * @returns true if the provided method is a standard method; otherwise, false.
+         */
+        static bool IsStandardRequestMethod(const HttpMethod& method);
 
     };
 

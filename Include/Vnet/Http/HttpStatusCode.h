@@ -6,12 +6,10 @@
 #ifndef _VNETHTTP_HTTP_HTTPSTATUSCODE_H_
 #define _VNETHTTP_HTTP_HTTPSTATUSCODE_H_
 
-#include <Vnet/Exports.h>
+#include <Vnet/Http/HttpParserOptions.h>
 
 #include <string>
 #include <string_view>
-#include <cstdint>
-#include <optional>
 
 namespace Vnet::Http {
 
@@ -230,17 +228,20 @@ namespace Vnet::Http {
 
     private:
         std::int32_t m_code;
-        std::string m_name;
+        std::string m_reasonPhrase;
 
     public:
 
         /**
          * Constructs a new HttpStatusCode object.
          * 
-         * @param code
-         * @param name
+         * @param code A numerical status code.
+         * @param reason A string explaining the response status code.
+         * @exception std::invalid_argument - The 'code' parameter is less than zero,
+         * or the 'reasonPhrase' parameter is an empty string, or 'reasonPhrase' contains 
+         * non-printable characters.
          */
-        HttpStatusCode(const std::int32_t code, const std::string_view name);
+        HttpStatusCode(const std::int32_t code, const std::string_view reasonPhrase);
         
         /**
          * Constructs a new HttpStatusCode object by copying an existing one.
@@ -277,11 +278,29 @@ namespace Vnet::Http {
         const std::int32_t GetCode(void) const;
 
         /**
-         * Returns the name of the status code.
+         * Returns the reason phrase.
          * 
-         * @returns A string.
+         * @returns A string explaining the response status code.
          */
-        const std::string& GetName(void) const;
+        const std::string& GetReasonPhrase(void) const;
+
+        /**
+         * Sets the numerical status code.
+         * 
+         * @param code A numerical status code.
+         * @exception std::invalid_argument - The 'code' parameter is less than zero.
+         */
+        void SetCode(const std::int32_t code);
+
+        /**
+         * Sets the reason phrase.
+         * 
+         * @param reasonPhrase A string explaining the response status code.
+         * @exception std::invalid_argument - The 'reasonPhrase' parameter 
+         * is an empty string, or 'reasonPhrase' contains non-printable
+         * characters.
+         */
+        void SetReasonPhrase(const std::string_view reasonPhrase);
 
         /**
          * Returns the string representation of the HttpStatusCode object.
@@ -291,27 +310,53 @@ namespace Vnet::Http {
         std::string ToString(void) const;
 
     private:
-        static std::optional<HttpStatusCode> ParseStatusCode(std::string_view str, const bool exceptions);
+        static std::optional<HttpStatusCode> ParseStatusCode(std::string_view str, const HttpParserOptions& options, const bool exceptions);
 
     public:
 
         /**
          * Parses an HTTP response status code.
          * 
-         * @param str
+         * @param str A string containing an HTTP response status code.
          * @returns An HttpStatusCode.
-         * @exception std::runtime_error - Bad HTTP status code.
          * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP response status code.
          */
         static HttpStatusCode Parse(const std::string_view str);
+        
+        /**
+         * Parses an HTTP response status code.
+         * 
+         * @param str A string containing an HTTP response status code.
+         * @param options Options for the HTTP parser.
+         * @returns An HttpStatusCode.
+         * @exception std::invalid_argument - The 'str' parameter is an empty string.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP response status code.
+         */
+        static HttpStatusCode Parse(const std::string_view str, const HttpParserOptions& options);
 
         /**
          * Tries to parse an HTTP response status code.
          * 
-         * @param str
+         * @param str A string containing an HTTP response status code.
          * @returns If successful, an HttpStatusCode is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<HttpStatusCode> TryParse(const std::string_view str);
+
+        /**
+         * Tries to parse an HTTP response status code.
+         * 
+         * @param str A string containing an HTTP response status code.
+         * @param options Options for the HTTP parser.
+         * @returns If successful, an HttpStatusCode is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpStatusCode> TryParse(const std::string_view str, const HttpParserOptions& options);
+
+        /**
+         * 
+         * @returns true if the provided response code is a standard response code; otherwise, false.
+         */
+        static bool IsStandardResponseCode(const HttpStatusCode& statusCode);
 
     };
 

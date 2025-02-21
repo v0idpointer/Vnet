@@ -203,7 +203,8 @@ namespace Vnet::Http {
         std::vector<std::uint8_t> Serialize(void) const;
 
     private:
-        static std::optional<HttpRequest> ParseRequest(std::span<const std::uint8_t> data, const bool exceptions);
+        static std::size_t ParseContentLength(const std::string_view str);
+        static std::optional<HttpRequest> ParseRequest(std::span<const std::uint8_t> data, const HttpParserOptions& options, const bool exceptions);
 
     public:
 
@@ -212,11 +213,21 @@ namespace Vnet::Http {
          * 
          * @param data A data buffer containing a serialized HttpRequest object.
          * @returns An HttpRequest.
-         * @exception std::runtime_error - Bad HTTP request, or unsupported HTTP version,
-         * or one or more bad HTTP headers.
          * @exception std::invalid_argument - The 'data' parameter is an empty buffer.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP request.
          */
         static HttpRequest Parse(const std::span<const std::uint8_t> data);
+
+        /**
+         * Parses an HTTP request message.
+         * 
+         * @param data A data buffer containing a serialized HttpRequest object.
+         * @param options Options for the HTTP parser.
+         * @returns An HttpRequest.
+         * @exception std::invalid_argument - The 'data' parameter is an empty buffer.
+         * @exception HttpParserException - An error has occurred while parsing an HTTP request.
+         */
+        static HttpRequest Parse(const std::span<const std::uint8_t> data, const HttpParserOptions& options);
 
         /**
          * Tries to parse an HTTP request message.
@@ -225,6 +236,15 @@ namespace Vnet::Http {
          * @returns If successful, an HttpRequest is returned; otherwise, std::nullopt is returned.
          */
         static std::optional<HttpRequest> TryParse(const std::span<const std::uint8_t> data);
+
+        /**
+         * Tries to parse an HTTP request message.
+         * 
+         * @param data A data buffer containing a serialized HttpRequest object.
+         * @param options Options for the HTTP parser.
+         * @returns If successful, an HttpRequest is returned; otherwise, std::nullopt is returned.
+         */
+        static std::optional<HttpRequest> TryParse(const std::span<const std::uint8_t> data, const HttpParserOptions& options);
 
     };
 

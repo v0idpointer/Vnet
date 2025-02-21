@@ -8,12 +8,11 @@
 #endif
 
 #include <Vnet/Http/HttpHeaderCollection.h>
+#include <Vnet/Http/HttpParserException.h>
 
 #include <algorithm>
 #include <vector>
 #include <sstream>
-#include <exception>
-#include <stdexcept>
 
 using namespace Vnet::Http;
 
@@ -220,7 +219,7 @@ std::string HttpHeaderCollection::ToString() const {
     return str;
 }
 
-std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::string_view str, const bool exceptions) {
+std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::string_view str, const HttpParserOptions& options, const bool exceptions) {
 
     std::size_t pos = 0;
     std::vector<std::string_view> v = { };
@@ -236,16 +235,37 @@ std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::stri
     }
     v.push_back(str);
 
+    if (options.MaxHeaderCount && v.size() > *options.MaxHeaderCount) {
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: too many HTTP headers.",
+            HttpStatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+        );
+        
+        return std::nullopt;
+    }
+
     HttpHeaderCollection collection;
     for (const std::string_view str : v) {
 
-        std::optional<HttpHeader> header = HttpHeader::TryParse(str);
-        if (!header.has_value()) {
-            if (exceptions) throw std::runtime_error("Bad HTTP header(s).");
+        std::optional<HttpHeader> header;
+        try { header = HttpHeader::Parse(str, options); }
+        catch (const HttpParserException& ex) {
+            if (exceptions) throw HttpParserException(ex.what(), ex.GetStatusCode());
             return std::nullopt;
         }
 
-        collection.Add(header.value(), true);
+        try { collection.Add(header.value(), !options.AppendHeadersWithIdenticalNames); }
+        catch (const std::runtime_error& ex) {
+            
+            using namespace std::string_literals;
+            if (exceptions) throw HttpParserException(
+                ("HTTP parser error: internal error: "s + ex.what()),
+                HttpStatusCode::INTERNAL_SERVER_ERROR
+            );
+
+            return std::nullopt;
+        }
 
     }
 
@@ -253,9 +273,17 @@ std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::stri
 }
 
 HttpHeaderCollection HttpHeaderCollection::Parse(const std::string_view str) {
-    return HttpHeaderCollection::ParseHeaders(str, true).value();
+    return HttpHeaderCollection::Parse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+HttpHeaderCollection HttpHeaderCollection::Parse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpHeaderCollection::ParseHeaders(str, options, true).value();
 }
 
 std::optional<HttpHeaderCollection> HttpHeaderCollection::TryParse(const std::string_view str) {
-    return HttpHeaderCollection::ParseHeaders(str, false);
+    return HttpHeaderCollection::TryParse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+std::optional<HttpHeaderCollection> HttpHeaderCollection::TryParse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpHeaderCollection::ParseHeaders(str, options, false);
 }
