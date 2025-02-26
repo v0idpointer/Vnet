@@ -89,7 +89,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to send the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Vnet::Sockets::SocketFlags flags) const;
+        virtual std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Vnet::Sockets::SocketFlags flags) const;
 
         /**
          * Sends data.
@@ -105,7 +105,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to send the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
+        virtual std::int32_t Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
 
         /**
          * Sends data.
@@ -118,7 +118,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to send the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Send(const std::span<const std::uint8_t> data, const Vnet::Sockets::SocketFlags flags) const;
+        virtual std::int32_t Send(const std::span<const std::uint8_t> data, const Vnet::Sockets::SocketFlags flags) const;
 
         /**
          * Sends data.
@@ -129,7 +129,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to send the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Send(const std::span<const std::uint8_t> data) const;
+        virtual std::int32_t Send(const std::span<const std::uint8_t> data) const;
 
         /**
          * Reads data.
@@ -147,7 +147,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to read the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Vnet::Sockets::SocketFlags flags) const;
+        virtual std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const Vnet::Sockets::SocketFlags flags) const;
 
         /**
          * Reads data.
@@ -163,7 +163,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to read the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
+        virtual std::int32_t Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const;
 
         /**
          * Reads data.
@@ -176,7 +176,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to read the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Receive(const std::span<std::uint8_t> data, const Vnet::Sockets::SocketFlags flags) const;
+        virtual std::int32_t Receive(const std::span<std::uint8_t> data, const Vnet::Sockets::SocketFlags flags) const;
 
         /**
          * Reads data.
@@ -187,7 +187,7 @@ namespace Vnet::Net {
          * @exception SecurityException - Failed to read the data (using SecureConnection).
          * @exception InvalidObjectStateException - The underlying Socket and/or SecureConnection objects are closed.
          */
-        std::int32_t Receive(const std::span<std::uint8_t> data) const;
+        virtual std::int32_t Receive(const std::span<std::uint8_t> data) const;
 
         /**
          * Shuts down the SSL/TLS connection and closes the socket.

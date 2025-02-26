@@ -254,6 +254,10 @@ std::optional<HttpHeaderCollection> HttpHeaderCollection::ParseHeaders(std::stri
             if (exceptions) throw HttpParserException(ex.what(), ex.GetStatusCode());
             return std::nullopt;
         }
+        catch (const std::invalid_argument&) {
+            if (exceptions) throw HttpParserException("HTTP parser error: bad HTTP header.", HttpStatusCode::BAD_REQUEST);
+            return std::nullopt;
+        }
 
         try { collection.Add(header.value(), !options.AppendHeadersWithIdenticalNames); }
         catch (const std::runtime_error& ex) {

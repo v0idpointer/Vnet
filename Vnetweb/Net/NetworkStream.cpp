@@ -102,15 +102,15 @@ std::int32_t NetworkStream::Send(const std::span<const std::uint8_t> data, const
 }
 
 std::int32_t NetworkStream::Send(const std::span<const std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const {
-    return this->Send(data, offset, size, SocketFlags::NONE);
+    return NetworkStream::Send(data, offset, size, SocketFlags::NONE);
 }
 
 std::int32_t NetworkStream::Send(const std::span<const std::uint8_t> data, const SocketFlags flags) const {
-    return this->Send(data, 0, data.size(), flags);
+    return NetworkStream::Send(data, 0, data.size(), flags);
 }
 
 std::int32_t NetworkStream::Send(const std::span<const std::uint8_t> data) const {
-    return this->Send(data, 0, data.size(), SocketFlags::NONE);
+    return NetworkStream::Send(data, 0, data.size(), SocketFlags::NONE);
 }
 
 std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size, const SocketFlags flags) const {
@@ -129,15 +129,15 @@ std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data, const st
 }
 
 std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data, const std::int32_t offset, const std::int32_t size) const {
-    return this->Receive(data, offset, size, SocketFlags::NONE);
+    return NetworkStream::Receive(data, offset, size, SocketFlags::NONE);
 }
 
 std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data, const SocketFlags flags) const {
-    return this->Receive(data, 0, data.size(), flags);
+    return NetworkStream::Receive(data, 0, data.size(), flags);
 }
 
 std::int32_t NetworkStream::Receive(const std::span<std::uint8_t> data) const {
-    return this->Receive(data, 0, data.size(), SocketFlags::NONE);
+    return NetworkStream::Receive(data, 0, data.size(), SocketFlags::NONE);
 }
 
 void NetworkStream::Close() {
