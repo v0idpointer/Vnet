@@ -17,9 +17,10 @@ using namespace Vnet::Security;
 using namespace Vnet::Cryptography;
 using namespace Vnet::Cryptography::Certificates;
 
-SecurityContext::SecurityContext() : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE), m_cert(nullptr), m_privateKey(nullptr) { }
+SecurityContext::SecurityContext(const ApplicationType appType, const SecurityProtocol protocol) : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE) {
 
-SecurityContext::SecurityContext(const ApplicationType appType, const SecurityProtocol protocol) : SecurityContext() {
+    this->m_applicationType = appType;
+    this->m_securityProtocol = protocol;
 
     const SSL_METHOD* method = nullptr;
     if (appType == ApplicationType::CLIENT) method = SSLv23_client_method();
@@ -44,7 +45,7 @@ SecurityContext::SecurityContext(const ApplicationType appType, const SecurityPr
 
 }
 
-SecurityContext::SecurityContext(SecurityContext&& ctx) noexcept : SecurityContext() {
+SecurityContext::SecurityContext(SecurityContext&& ctx) noexcept : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE) {
     this->operator= (std::move(ctx));
 }
 
@@ -69,6 +70,8 @@ SecurityContext& SecurityContext::operator= (SecurityContext&& ctx) noexcept {
         this->m_ctx = ctx.m_ctx;
         ctx.m_ctx = INVALID_SECURITY_CONTEXT_HANDLE;
 
+        this->m_applicationType = ctx.m_applicationType;
+        this->m_securityProtocol = ctx.m_securityProtocol;
         this->m_cert = std::move(ctx.m_cert);
         this->m_privateKey = std::move(ctx.m_privateKey);
 
@@ -81,20 +84,20 @@ NativeSecurityContext_t SecurityContext::GetNativeSecurityContextHandle() const 
     return this->m_ctx;
 }
 
+Vnet::Security::ApplicationType SecurityContext::GetApplicationType() const {
+    return this->m_applicationType;
+}
+
+SecurityProtocol SecurityContext::GetSecurityProtocol() const {
+    return this->m_securityProtocol;
+}
+
 const std::optional<std::reference_wrapper<const Certificate>> SecurityContext::GetCertificate() const {
-
-    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
-        throw std::runtime_error("Invalid security context.");
-
     if (this->m_cert) return std::cref(*this->m_cert);
     else return std::nullopt;
 }
 
 const std::optional<std::reference_wrapper<const CryptoKey>> SecurityContext::GetPrivateKey() const {
-
-    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
-        throw std::runtime_error("Invalid security context.");
-
     if (this->m_privateKey) return std::cref(*this->m_privateKey);
     else return std::nullopt;
 }
@@ -109,14 +112,8 @@ static inline std::unique_ptr<Certificate> DuplicateCertificate(const Certificat
 
 void SecurityContext::SetCertificate(const std::optional<std::reference_wrapper<const Certificate>> cert) {
 
-    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
-        throw std::runtime_error("Invalid security context.");
-
     if (!cert.has_value()) throw std::invalid_argument("'cert': std::nullopt");
     else {
-
-        if (cert->get().GetNativeCertificateHandle() == INVALID_CERTIFICATE_HANDLE)
-            throw std::invalid_argument("'cert': Invalid certificate.");
 
         this->m_cert = DuplicateCertificate(cert->get());
         if (this->m_cert->HasPrivateKey())
@@ -132,16 +129,20 @@ void SecurityContext::SetCertificate(const std::optional<std::reference_wrapper<
 
 void SecurityContext::SetPrivateKey(const std::optional<std::reference_wrapper<const CryptoKey>> privateKey) {
 
-    if (this->m_ctx == INVALID_SECURITY_CONTEXT_HANDLE)
-        throw std::runtime_error("Invalid security context.");
-
     if (!privateKey.has_value()) throw std::invalid_argument("'privateKey': std::nullopt"); // OpenSSL for some fucking reason doesn't allow
     else {                                                                                  // you to remove an EVP_PKEY from an SSL_CTX ???
+
+        if (KeyUtils::IsSymmetricKey(privateKey->get()))
+            throw std::invalid_argument("'privateKey': Symmetric key.");
 
         if (privateKey->get().GetNativeKeyHandle() == INVALID_KEY_HANDLE)
             throw std::invalid_argument("'privateKey': Invalid key.");
 
-        this->m_privateKey = KeyUtils::DuplicateKey(privateKey->get());
+        try { this->m_privateKey = KeyUtils::DuplicateKey(privateKey->get()); }
+        catch (const std::invalid_argument& ex) {
+            using namespace std::string_literals;
+            throw std::invalid_argument("'privateKey': "s + ex.what());
+        }
 
     }
 

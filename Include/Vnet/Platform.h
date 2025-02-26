@@ -1,12 +1,12 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #ifndef _VNET_PLATFORM_H_
 #define _VNET_PLATFORM_H_
 
-#include <Vnet/Platform.h>
+#include <Vnet/Version.h>
 
 #if defined(_WIN32)
 #define VNET_PLATFORM_WINDOWS

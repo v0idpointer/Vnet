@@ -1,15 +1,14 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Http/HttpRequest.h>
+#include <Vnet/Http/HttpParserException.h>
 
 #include <algorithm>
 #include <cstring>
 #include <sstream>
-#include <exception>
-#include <stdexcept>
 
 using namespace Vnet;
 using namespace Vnet::Http;
@@ -126,11 +125,9 @@ void HttpRequest::SetHeaders(HttpHeaderCollection&& headers) noexcept {
 void HttpRequest::SetPayload(const std::span<const std::uint8_t> payload) {
     
     if (payload.empty())
-        throw std::invalid_argument("Empty payload buffer.");
+        throw std::invalid_argument("'payload': Empty buffer.");
 
-    if (payload.size() > this->m_payload.size())
-        this->ResizePayload(payload.size());
-
+    this->ResizePayload(payload.size());
     std::memcpy(this->m_payload.data(), payload.data(), payload.size());
 
 }
@@ -180,10 +177,27 @@ std::vector<std::uint8_t> HttpRequest::Serialize() const {
     return data;
 }
 
-std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_t> data, const bool exceptions) {
+std::size_t HttpRequest::ParseContentLength(const std::string_view str) {
+
+    if (str.starts_with('-'))
+        throw std::out_of_range("value out of range.");
+
+    std::size_t contentLength = 0;
+    try { contentLength = static_cast<std::size_t>(std::stoull(str.data())); }
+    catch (const std::invalid_argument&) {
+        throw std::invalid_argument("invalid value.");
+    }
+    catch (const std::out_of_range&) {
+        throw std::out_of_range("value out of range.");
+    }
+
+    return contentLength;
+}
+
+std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_t> data, const HttpParserOptions& options, const bool exceptions) {
 
     if (data.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty buffer.");
+        if (exceptions) throw std::invalid_argument("'data': Empty buffer.");
         return std::nullopt;
     }
 
@@ -194,32 +208,98 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
 
     std::size_t lineEnd = str.find("\r\n");
     if (lineEnd == std::string_view::npos) {
-        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request.",
+            HttpStatusCode::BAD_REQUEST
+        );
+        
         return std::nullopt;
     }
 
     // parse the method:
     const std::size_t methodEnd = str.find(' ');
     if ((methodEnd == std::string_view::npos) || (methodEnd >= lineEnd)) {
-        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request.",
+            HttpStatusCode::BAD_REQUEST
+        );
+        
         return std::nullopt;
     }
 
-    HttpMethod method = { str.substr(0, methodEnd) };
-    request.SetMethod(std::move(method));
+    std::optional<HttpMethod> method;
+    try { method = HttpMethod::Parse(str.substr(0, methodEnd), options); }
+    catch (const HttpParserException& ex) {
+
+        std::size_t pos = 0;
+        std::string msg = ex.what();
+        if ((pos = msg.find(": ")) != std::string::npos)
+            msg.insert((pos + 2), "bad HTTP request: ");
+
+        if (exceptions) throw HttpParserException(
+            msg,
+            ex.GetStatusCode()
+        );
+
+        return std::nullopt;
+    }
+    catch (const std::invalid_argument&) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request.",
+            HttpStatusCode::BAD_REQUEST
+        );
+        
+        return std::nullopt;
+    }
+    
+    if (!options.AllowNonstandardRequestMethods && !HttpMethod::IsStandardRequestMethod(method.value())) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad request method: non-standard method.",
+            HttpStatusCode::METHOD_NOT_ALLOWED
+        );
+
+        return std::nullopt;
+    }
+
+    request.SetMethod(std::move(method.value()));
     str = str.substr(methodEnd + 1);
     lineEnd -= (request.GetMethod().GetName().length() + 1);
 
     // parse the request uri:
     const std::size_t uriEnd = str.find(' ');
     if ((uriEnd == std::string_view::npos) || (uriEnd >= lineEnd)) {
-        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request.",
+            HttpStatusCode::BAD_REQUEST
+        );
+        
         return std::nullopt;
     }
 
-    std::optional<Uri> uri = Uri::TryParse(str.substr(0, uriEnd));
+    const std::string_view uriStr = str.substr(0, uriEnd);
+    if (options.MaxRequestUriLength && (uriStr.length() > *options.MaxRequestUriLength)) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad request URI: URI too long.",
+            HttpStatusCode::URI_TOO_LONG
+        );
+
+        return std::nullopt;
+    }
+
+    std::optional<Uri> uri = Uri::TryParse(uriStr);
     if (!uri.has_value()) {
-        if (exceptions) throw std::runtime_error("Bad HTTP request.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad request URI: URI malformed.",
+            HttpStatusCode::BAD_REQUEST
+        );
+        
         return std::nullopt;
     }
 
@@ -230,12 +310,27 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
     // check if the version is http 1.0 or 1.1:
     const std::string_view version = str.substr(0, lineEnd);
     if ((version != "HTTP/1.0") && (version != "HTTP/1.1")) {
-        if (exceptions) throw std::runtime_error("Unsupported HTTP version.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: invalid/unsupported HTTP version.",
+            (version.starts_with("HTTP/") ? HttpStatusCode::HTTP_VERSION_NOT_SUPPORTED : HttpStatusCode::BAD_REQUEST)
+        );
+        
         return std::nullopt;
     }
 
     str = str.substr(lineEnd + 2);
-    if (str.empty()) return request;
+
+    if (str == "\r\n") return request;
+    if (str.empty()) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request.",
+            HttpStatusCode::BAD_REQUEST
+        );
+
+        return std::nullopt;
+    }
 
     /* parse http headers */
 
@@ -243,11 +338,31 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
     if (headersEnd != std::string_view::npos) {
 
         std::string_view headers = str.substr(0, headersEnd);
-        str = str.substr(headersEnd + 4); // +4 for CR LF CR LF
+        str = str.substr(headersEnd + 2);
 
-        std::optional<HttpHeaderCollection> collection = HttpHeaderCollection::TryParse(headers);
-        if (!collection.has_value()) {
-            if (exceptions) throw std::runtime_error("Bad header(s) in HTTP request.");
+        std::optional<HttpHeaderCollection> collection;
+        try { collection = HttpHeaderCollection::Parse(headers, options); }
+        catch (const HttpParserException& ex) {
+
+            std::size_t pos = 0;
+            std::string msg = ex.what();
+            if ((pos = msg.find(": ")) != std::string::npos)
+                msg.insert((pos + 2), "bad HTTP request: ");
+
+            if (exceptions) throw HttpParserException(
+                msg,
+                ex.GetStatusCode()
+            );
+
+            return std::nullopt;
+        }
+        catch (const std::invalid_argument&) {
+            
+            if (exceptions) throw HttpParserException(
+                "HTTP parser error: bad HTTP request.",
+                HttpStatusCode::BAD_REQUEST
+            );
+            
             return std::nullopt;
         }
 
@@ -255,9 +370,80 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
 
     }
 
-    if (str.empty()) return request;
+    std::optional<std::size_t> contentLength;
+    if (request.GetHeaders().Contains("Content-Length")) {
+        
+        const std::string& contentLengthHdr = request.GetHeaders().Get("Content-Length").GetValue();
+        try { contentLength = HttpRequest::ParseContentLength(contentLengthHdr); }
+        catch (const std::exception& ex) {
+
+            using namespace std::string_literals;
+            if (exceptions) throw HttpParserException(
+                ("HTTP parser error: bad HTTP request: bad Content-Length header: "s + ex.what()),
+                HttpStatusCode::BAD_REQUEST
+            );
+
+            return std::nullopt;
+        }
+
+    }
+
+    if (str.starts_with("\r\n")) str = str.substr(2);
+    else {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request.",
+            HttpStatusCode::BAD_REQUEST
+        );
+        
+        return std::nullopt;
+    }
+
+    if (str.empty() && (!contentLength.has_value() || (*contentLength == 0))) return request;
 
     /* copy the payload */
+
+    /* if (str.empty() && contentLength.has_value() && (contentLength.value() != 0)) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad message body: payload empty.",
+            HttpStatusCode::BAD_REQUEST
+        );
+
+        return std::nullopt;
+    } */
+   
+    if (str.empty()) return request;
+
+    if (!contentLength.has_value()) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad message body: Content-Length header does not exist.",
+            HttpStatusCode::LENGTH_REQUIRED
+        );
+
+        return std::nullopt;
+    }
+
+    if (str.size() != contentLength.value()) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad message body: payload size != Content-Length",
+            HttpStatusCode::BAD_REQUEST
+        );
+
+        return std::nullopt;
+    }
+
+    if (options.MaxPayloadSize && (contentLength > *options.MaxPayloadSize)) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP request: bad message body: payload too large.",
+            HttpStatusCode::CONTENT_TOO_LARGE
+        );
+
+        return std::nullopt;
+    }
 
     std::vector<std::uint8_t> payload(str.length());
     std::memcpy(payload.data(), str.data(), str.length());
@@ -267,9 +453,17 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
 }
 
 HttpRequest HttpRequest::Parse(const std::span<const std::uint8_t> data) {
-    return HttpRequest::ParseRequest(data, true).value();
+    return HttpRequest::Parse(data, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+HttpRequest HttpRequest::Parse(const std::span<const std::uint8_t> data, const HttpParserOptions& options) {
+    return HttpRequest::ParseRequest(data, options, true).value();
 }
 
 std::optional<HttpRequest> HttpRequest::TryParse(const std::span<const std::uint8_t> data) {
-    return HttpRequest::ParseRequest(data, false);
+    return HttpRequest::TryParse(data, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+std::optional<HttpRequest> HttpRequest::TryParse(const std::span<const std::uint8_t> data, const HttpParserOptions& options) {
+    return HttpRequest::ParseRequest(data, options, false);
 }

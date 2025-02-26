@@ -33,7 +33,6 @@ namespace Vnet::Cryptography::Certificates {
         Certificate(NativeCertificate_t const cert, std::unique_ptr<CryptoKey>&& privateKey) noexcept;
 
     public:
-        Certificate(void);
         Certificate(const Certificate&) = delete;
         Certificate(Certificate&& cert) noexcept;
         virtual ~Certificate(void);
@@ -44,17 +43,17 @@ namespace Vnet::Cryptography::Certificates {
         NativeCertificate_t GetNativeCertificateHandle(void) const;
 
         /**
-         * Returns the subject's distinguished name formatted according to RFC 2253.
+         * Returns the X.509 certificate's subject name.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns A string containing the subject's distinguished name formatted according to RFC 2253.
          * @exception SecurityException
          */
         std::string GetSubjectName(void) const;
 
         /**
-         * Returns the certificate issuer's distinguished name formatted according to RFC 2253.
+         * Returns the X.509 certificate's issuer name. 
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns A string containing the certificate issuer's distinguished name formatted according to RFC 2253.
          * @exception SecurityException
          */
         std::string GetIssuerName(void) const;
@@ -62,7 +61,7 @@ namespace Vnet::Cryptography::Certificates {
         /**
          * Returns the datetime when the X.509 certificate becomes valid.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns A DateTime.
          * @exception SecurityException
          */
         DateTime GetNotBefore(void) const;
@@ -70,7 +69,7 @@ namespace Vnet::Cryptography::Certificates {
         /**
          * Returns the datetime after which the X.509 certificate becomes invalid.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns A DateTime.
          * @exception SecurityException
          */
         DateTime GetNotAfter(void) const;
@@ -78,14 +77,14 @@ namespace Vnet::Cryptography::Certificates {
         /**
          * Returns the version of the X.509 certificate format.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns An integer, between 1 and 3.
          */
         std::int32_t GetVersion(void) const;
 
         /**
          * Returns the X.509 certificate's serial number.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns A string containing the serial number in hexadecimal notation.
          * @exception SecurityException
          */
         std::string GetSerialNumber(void) const;
@@ -94,7 +93,7 @@ namespace Vnet::Cryptography::Certificates {
          * Returns the X.509 certificate's thumbprint.
          * The thumbprint is calculated using the SHA-1 algorithm.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns A string containing the thumbprint in hexadecimal notation.
          * @exception SecurityException
          */
         std::string GetThumbprint(void) const;
@@ -103,31 +102,31 @@ namespace Vnet::Cryptography::Certificates {
          * Returns the X.509 certificate's thumbprint.
          * 
          * @param hashAlg The hash algorithm used to calculate the thumbprint.
-         * @exception std::runtime_error - The certificate is not valid.
-         * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid hash algorithm
+         * @returns A string containing the thumbprint in hexadecimal notation.
+         * @exception std::invalid_argument - The 'hashAlg' parameter contains an invalid or unsupported hash algorithm
          * @exception SecurityException
          */
         std::string GetThumbprint(const HashAlgorithm hashAlg) const;
 
         /**
-         * Returns true if the X.509 certificate has it's corresponding private key.
+         * Checks if the X.509 certificate has it's corresponding private key.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns true if the certificate has it's corresponding private key; otherwise, false.
          */
         bool HasPrivateKey(void) const;
 
         /**
          * Returns the X.509 certificate's private key.
          * 
-         * @exception std::runtime_error - The certificate is not valid.
+         * @returns An optional constant reference to a CryptoKey.
          */
         const std::optional<std::reference_wrapper<const CryptoKey>> GetPrivateKey(void) const;
 
         /**
          * Returns the X.509 certificate's public key.
          * 
-         * @exception std::runtime_error - The certificate is not valid, or the X.509 
-         * certificate's public key is of an unknown type.
+         * @returns A pointer to a CryptoKey.
+         * @exception std::runtime_error - The X.509 certificate's public key is of an unknown type.
          * @exception SecurityException
          */
         std::unique_ptr<CryptoKey> GetPublicKey(void) const;
@@ -136,7 +135,6 @@ namespace Vnet::Cryptography::Certificates {
          * Exports the X.509 certificate in PEM format.
          * 
          * @returns A string containing the PEM encoded certificate.
-         * @exception std::runtime_error - The certificate is not valid.
          * @exception SecurityException - Certificate export failed.
          */
         std::string ExportPEM(void) const;
@@ -148,7 +146,7 @@ namespace Vnet::Cryptography::Certificates {
          * @param privateKey A private key that corresponds to the X.509 certificate being loaded.
          * @returns An X.509 certificate
          * @exception std::invalid_argument - The 'certPem' parameter is empty, or the 'privateKey'
-         * parameter contains an invalid key, or 'privateKey' contains a symmetric cryptographic key.
+         * parameter contains a symmetric cryptographic key, or 'privateKey' contains an invalid cryptographic key.
          * @exception std::runtime_error - The provided private key is of an unknown type.
          * @exception SecurityException - Certificate import failed, or the provided private key
          * does not correspond to the X.509 certificate.

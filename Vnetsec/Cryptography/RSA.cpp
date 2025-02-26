@@ -45,9 +45,6 @@ const std::unordered_map<RsaSignaturePadding, std::int32_t> Vnet::Cryptography::
 
 std::vector<std::uint8_t> Vnet::Cryptography::RSA::Encrypt(const RsaKey& key, const std::span<const std::uint8_t> data, const RsaEncryptionPadding padding) {
 
-    if (key.GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::invalid_argument("'key': Invalid key.");
-
     if (!RSA::s_paddings.contains(padding))
         throw std::invalid_argument("'padding': Invalid padding.");
 
@@ -97,9 +94,6 @@ std::vector<std::uint8_t> Vnet::Cryptography::RSA::Encrypt(const RsaKey& key, co
 }
 
 std::vector<std::uint8_t> Vnet::Cryptography::RSA::Decrypt(const RsaKey& privateKey, const std::span<const std::uint8_t> encryptedData, const RsaEncryptionPadding padding) {
-    
-    if (privateKey.GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::invalid_argument("'privateKey': Invalid key.");
 
     if (!privateKey.IsPrivateKey())
         throw std::invalid_argument("'privateKey': The specified key is not an RSA private key.");
@@ -168,9 +162,6 @@ std::vector<std::uint8_t> Vnet::Cryptography::RSA::SignHashed(
     const RsaSignaturePadding padding
 ) {
 
-    if (privateKey.GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::invalid_argument("'privateKey': Invalid key.");
-
     if (!privateKey.IsPrivateKey())
         throw std::invalid_argument("'privateKey': The specified key is not an RSA private key.");
 
@@ -232,9 +223,6 @@ bool Vnet::Cryptography::RSA::VerifyHashed(
     const HashAlgorithm hashAlg, 
     const RsaSignaturePadding padding
 ) {
-    
-    if (key.GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::invalid_argument("'key': Invalid key.");
 
     if (!RSA::s_signPaddings.contains(padding))
         throw std::invalid_argument("'padding': Invalid padding.");

@@ -20,7 +20,6 @@ namespace Vnet::Cryptography {
         RsaKey(NativeCryptoKey_t const key);
 
     public:
-        RsaKey(void);
         RsaKey(RsaKey&& key) noexcept;
         virtual ~RsaKey(void);
 
@@ -35,22 +34,17 @@ namespace Vnet::Cryptography {
          * an RSA public key, a copy of that key is returned.
          * 
          * @returns A newly created RsaKey object containing the matching RSA public key.
-         * @exception std::runtime_error - The key is not valid.
          * @exception SecurityException - Thrown if deriving the public key fails.
          */
         RsaKey DerivePublicKey(void) const;
 
         /**
          * Returns true if the current key is an RSA private key.
-         * 
-         * @exception std::runtime_error - The key is not valid.
          */
         bool IsPrivateKey(void) const;
 
         /**
          * Returns true if the current key is an RSA public key.
-         * 
-         * @exception std::runtime_error - The key is not valid.
          */
         bool IsPublicKey(void) const;
 
@@ -58,7 +52,6 @@ namespace Vnet::Cryptography {
          * Exports the RSA key parameters.
          * 
          * @returns Key parameters.
-         * @exception std::runtime_error - The key is not valid.
          * @exception SecurityException - Key export failed.
          */
         RsaKeyParameters ExportParameters(void) const;
@@ -69,7 +62,6 @@ namespace Vnet::Cryptography {
          * @param password A password used to encrypt the RSA private key.
          * This parameter must be std::nullopt when exporting RSA public keys.
          * @returns A string containing the PEM encoded key.
-         * @exception std::runtime_error - The key is not valid.
          * @exception std::invalid_argument - Thrown if a password is provided when exporting a public key.
          * @exception SecurityException - Key export failed.
          */

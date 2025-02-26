@@ -56,9 +56,8 @@ namespace Vnet::Cryptography {
          * @param data The data to encrypt.
          * @param mode The block cipher mode of operation.
          * @returns The encrypted data.
-         * @exception std::invalid_argument - The 'key' parameter contains an invalid key,
-         * or 'key' does not have an initialization vector, or the input data is not padded,
-         * or the 'mode' parameter contains an invalid/unsupported block cipher mode of operation.
+         * @exception std::invalid_argument - The 'key' parameter does not have an initialization vector, 
+         * or the input data is not padded, or the 'mode' parameter contains an invalid/unsupported block cipher mode of operation.
          * @exception SecurityException - Encryption failed.
          */
         static std::vector<std::uint8_t> Encrypt(
@@ -95,9 +94,8 @@ namespace Vnet::Cryptography {
          * @param encryptedData The data to decrypt.
          * @param mode The block cipher mode of operation.
          * @returns The decrypted data.
-         * @exception std::invalid_argument - The 'key' parameter contains an invalid key,
-         * or 'key' does not have an initialization vector, or the input data does not form a complete block,
-         * or the 'mode' parameter contains an invalid/unsupported block cipher mode of operation.
+         * @exception std::invalid_argument - The 'key' parameter  does not have an initialization vector, 
+         * or the input data does not form a complete block, or the 'mode' parameter contains an invalid/unsupported block cipher mode of operation.
          * @exception SecurityException - Decryption failed.
          */
         static std::vector<std::uint8_t> Decrypt(
@@ -105,6 +103,24 @@ namespace Vnet::Cryptography {
             const std::span<const std::uint8_t> encryptedData,
             const BlockCipherMode mode
         );
+
+        /**
+         * Generates a new AES key.
+         * 
+         * @param keySize The key size (in bits).
+         * @returns A newly generated key.
+         * @exception std::invalid_argument - The 'keySize' paremeter contains an invalid size for an AES key.
+         */
+        static AesKey GenerateKey(const std::int32_t keySize);
+
+        /**
+         * Generates a new AES key and initialization vector.
+         * 
+         * @param keySize The key size (in bits).
+         * @returns A newly generated key and initialization vector (IV).
+         * @exception std::invalid_argument - The 'keySize' paremeter contains an invalid size for an AES key.
+         */
+        static AesKey GenerateKeyAndIV(const std::int32_t keySize);
 
     };
 

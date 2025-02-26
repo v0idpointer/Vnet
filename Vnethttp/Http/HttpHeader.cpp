@@ -1,18 +1,20 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Http/HttpHeader.h>
+#include <Vnet/Http/HttpParserException.h>
 
 #include <algorithm>
 #include <sstream>
-#include <exception>
-#include <stdexcept>
 
 using namespace Vnet::Http;
 
-HttpHeader::HttpHeader() : m_name("X-Myheader"), m_value("") { }
+HttpHeader::HttpHeader() { 
+    this->SetName("x-my-header");
+    this->SetValue("");
+}
 
 HttpHeader::HttpHeader(const std::string_view name, const std::string_view value) {
     this->SetName(name);
@@ -79,7 +81,7 @@ const std::string& HttpHeader::GetValue() const {
 void HttpHeader::SetName(const std::string_view name) {
 
     if (name.empty()) 
-        throw std::invalid_argument("Empty header name.");
+        throw std::invalid_argument("'name': Empty string.");
 
     std::string_view::const_iterator it;
     it = std::find_if(name.begin(), name.end(), [] (const char ch) -> bool {
@@ -93,27 +95,15 @@ void HttpHeader::SetName(const std::string_view name) {
     });
 
     if (it != name.end()) 
-        throw std::invalid_argument("Invalid character(s) in header name.");
+        throw std::invalid_argument("'name': Invalid header name.");
 
     this->m_name = name;
 
-    bool capitalize = true;
     for (std::size_t i = 0; i < this->m_name.length(); ++i) {
 
         char& ch = this->m_name[i];
-        
-        if (ch == '-') {
-            capitalize = true;
-            continue;
-        }
-
-        if (capitalize && ((ch >= 'a') && (ch <= 'z')))
-            ch -= ('a' - 'A');
-
-        if (!capitalize && ((ch >= 'A') && (ch <= 'Z')))
+        if ((ch >= 'A') && (ch <= 'Z'))
             ch += ('a' - 'A');
-
-        capitalize = false;
 
     }
 
@@ -123,25 +113,12 @@ void HttpHeader::SetValue(const std::string_view value) {
     
     std::string_view::const_iterator it;
     it = std::find_if(value.begin(), value.end(), [] (const char ch) -> bool {
-
-        if ((ch >= 'A') && (ch <= 'Z')) return false;
-        if ((ch >= 'a') && (ch <= 'z')) return false;
-        if ((ch >= '0') && (ch <= '9')) return false;
-
-        if ((ch == '!') || (ch == '#') || (ch == '$') || (ch == '%')) return false;
-        if ((ch == '&') || (ch == '\'') || (ch == '(') || (ch == ')')) return false;
-        if ((ch == '*') || (ch == '+') || (ch == ',') || (ch == '-')) return false;
-        if ((ch == '.') || (ch == '/') || (ch == ':') || (ch == ';')) return false;
-        if ((ch == '<') || (ch == '=') || (ch == '>') || (ch == '?')) return false;
-        if ((ch == '@') || (ch == '[') || (ch == ']') || (ch == '^')) return false;
-        if ((ch == '_') || (ch == '`') || (ch == '{') || (ch == '|')) return false;
-        if ((ch == '}') || (ch == '~') || (ch == ' ')) return false;
-
-        return true;
+        if ((ch >= 0x20) && (ch < 0x7F)) return false; // only printable ascii characters.
+        else return true;
     });
 
     if (it != value.end())
-        throw std::invalid_argument("Invalid character(s) in header value.");
+        throw std::invalid_argument("'value': Invalid header value.");
 
     this->m_value = value;
 
@@ -155,43 +132,87 @@ std::string HttpHeader::ToString() const {
     return stream.str();
 }
 
-std::optional<HttpHeader> HttpHeader::ParseHeader(std::string_view str, const bool exceptions) {
+std::optional<HttpHeader> HttpHeader::ParseHeader(std::string_view str, const HttpParserOptions& options, const bool exceptions) {
 
     std::size_t pos = 0;
 
     if (str.empty()) {
-        if (exceptions) throw std::invalid_argument("Empty string.");
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
         return std::nullopt;
     }
 
     if ((pos = str.find(": ")) == std::string_view::npos) {
-        if (exceptions) throw std::runtime_error("Bad HTTP header.");
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP header.",
+            HttpStatusCode::BAD_REQUEST
+        );
+
+        return std::nullopt;
+    }
+
+    const std::string_view name = str.substr(0, pos);
+    const std::string_view value = str.substr(pos + 2);
+
+    if (options.MaxHeaderNameLength && (name.length() > *options.MaxHeaderNameLength)) {
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP header: header name too long.",
+            HttpStatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+        );
+
+        return std::nullopt;
+    }
+
+    if (options.MaxHeaderValueLength && (value.length() > *options.MaxHeaderValueLength)) {
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP header: header value too long.",
+            HttpStatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+        );
+        
         return std::nullopt;
     }
 
     HttpHeader header;
-
-    const std::string_view name = str.substr(0, pos);
+    
     try { header.SetName(name); }
-    catch (const std::exception&) {
-        if (exceptions) throw std::runtime_error("Bad HTTP header.");
+    catch (const std::invalid_argument&) {
+
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP header: invalid header name.",
+            HttpStatusCode::BAD_REQUEST
+        );
+
         return std::nullopt;
     }
 
-    const std::string_view value = str.substr(pos + 2);
     try { header.SetValue(value); }
-    catch (const std::exception&) {
-        if (exceptions) throw std::runtime_error("Bad HTTP header.");
+    catch (const std::invalid_argument& ex) {
+        
+        if (exceptions) throw HttpParserException(
+            "HTTP parser error: bad HTTP header: invalid header value.",
+            HttpStatusCode::BAD_REQUEST
+        );
+
         return std::nullopt;
     }
-
+    
     return header;
 }
 
 HttpHeader HttpHeader::Parse(const std::string_view str) {
-    return HttpHeader::ParseHeader(str, true).value();
+    return HttpHeader::Parse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+HttpHeader HttpHeader::Parse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpHeader::ParseHeader(str, options, true).value();
 }
 
 std::optional<HttpHeader> HttpHeader::TryParse(const std::string_view str) {
-    return HttpHeader::ParseHeader(str, false);
+    return HttpHeader::TryParse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+std::optional<HttpHeader> HttpHeader::TryParse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpHeader::ParseHeader(str, options, false);
 }

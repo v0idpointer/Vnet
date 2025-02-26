@@ -16,8 +16,6 @@ using namespace Vnet::Security;
 
 RsaKey::RsaKey(NativeCryptoKey_t const key) : CryptoKey(key) { }
 
-RsaKey::RsaKey() : RsaKey(INVALID_KEY_HANDLE) { }
-
 RsaKey::RsaKey(RsaKey&& key) noexcept : RsaKey(INVALID_KEY_HANDLE) {
     this->operator= (std::move(key));
 }
@@ -47,9 +45,6 @@ bool RsaKey::operator== (const CryptoKey& key) const {
 }
 
 RsaKey RsaKey::DerivePublicKey() const {
-
-    if (this->GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::runtime_error("Invalid key.");
 
     const RSA* rsaPrivate = EVP_PKEY_get0_RSA(this->GetNativeKeyHandle());
     if (rsaPrivate == nullptr) throw SecurityException(ERR_get_error());
@@ -108,9 +103,6 @@ static inline BIGNUM* VectorToBignum(const std::optional<std::vector<std::uint8_
 
 RsaKeyParameters RsaKey::ExportParameters() const {
 
-    if (this->GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::runtime_error("Invalid key.");
-
     const RSA* rsa = EVP_PKEY_get0_RSA(this->GetNativeKeyHandle());
     if (rsa == nullptr) throw SecurityException(ERR_get_error());
 
@@ -133,9 +125,6 @@ RsaKeyParameters RsaKey::ExportParameters() const {
 }
 
 std::string RsaKey::ExportPEM(const std::optional<std::string_view> password) const {
-
-    if (this->GetNativeKeyHandle() == INVALID_KEY_HANDLE)
-        throw std::runtime_error("Invalid key.");
 
     const bool publicKey = this->IsPublicKey();
 

@@ -24,8 +24,6 @@ using namespace Vnet::Security;
 Certificate::Certificate(NativeCertificate_t const cert, std::unique_ptr<CryptoKey>&& privateKey) noexcept
     : m_cert(cert), m_privateKey(std::move(privateKey)) { }
 
-Certificate::Certificate() : Certificate(nullptr, nullptr) { }
-
 Certificate::Certificate(Certificate&& cert) noexcept : Certificate(nullptr, nullptr) {
     this->operator= (std::move(cert));
 }
@@ -63,9 +61,6 @@ NativeCertificate_t Certificate::GetNativeCertificateHandle() const {
 }
 
 std::string Certificate::GetSubjectName() const {
-    
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
 
     BIO* bio = BIO_new(BIO_s_mem());
     if (bio == nullptr) throw SecurityException(ERR_get_error());
@@ -86,9 +81,6 @@ std::string Certificate::GetSubjectName() const {
 }
 
 std::string Certificate::GetIssuerName() const {
-    
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
 
     BIO* bio = BIO_new(BIO_s_mem());
     if (bio == nullptr) throw SecurityException(ERR_get_error());
@@ -112,6 +104,7 @@ static inline DateTime ToDateTime(ASN1_TIME* const time) noexcept {
 
     std::tm tm = { 0 };
     ASN1_TIME_to_tm(time, &tm);
+    tm.tm_isdst = -1;
 
     DateTime dateTime = { std::mktime(&tm) };
     dateTime += std::chrono::seconds(DateTime::Now().GetTimezoneOffset());
@@ -121,9 +114,6 @@ static inline DateTime ToDateTime(ASN1_TIME* const time) noexcept {
 
 DateTime Certificate::GetNotBefore() const {
     
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
-    
     ASN1_TIME* notBefore = X509_get_notBefore(this->m_cert);
     if (notBefore == nullptr) throw SecurityException(ERR_get_error());
 
@@ -132,9 +122,6 @@ DateTime Certificate::GetNotBefore() const {
 
 DateTime Certificate::GetNotAfter() const {
     
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
-    
     ASN1_TIME* notAfter = X509_get_notAfter(this->m_cert);
     if (notAfter == nullptr) throw SecurityException(ERR_get_error());
 
@@ -142,17 +129,10 @@ DateTime Certificate::GetNotAfter() const {
 }
 
 std::int32_t Certificate::GetVersion() const {
-    
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
-
     return (X509_get_version(this->m_cert) + 1);
 }
 
 std::string Certificate::GetSerialNumber() const {
-
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
 
     ASN1_INTEGER* serialNumber = X509_get_serialNumber(this->m_cert);
     if (serialNumber == nullptr) throw SecurityException(ERR_get_error());
@@ -175,9 +155,6 @@ std::string Certificate::GetThumbprint() const {
 
 std::string Certificate::GetThumbprint(const HashAlgorithm hashAlg) const {
 
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
-
     std::vector<std::uint8_t> digest(HashFunction::GetDigestSize(hashAlg) / 8);
     std::uint32_t n = 0;
 
@@ -192,26 +169,15 @@ std::string Certificate::GetThumbprint(const HashAlgorithm hashAlg) const {
 }
 
 bool Certificate::HasPrivateKey() const {
-    
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
-
     return (this->m_privateKey != nullptr);
 }
 
 const std::optional<std::reference_wrapper<const CryptoKey>> Certificate::GetPrivateKey() const {
-
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
-
     if (this->m_privateKey) return std::cref(*this->m_privateKey);
     else return std::nullopt;
 }
 
 std::unique_ptr<CryptoKey> Certificate::GetPublicKey() const {
-
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
 
     EVP_PKEY* publicKey = X509_get_pubkey(this->m_cert);
     if (publicKey == nullptr) throw SecurityException(ERR_get_error());
@@ -242,9 +208,6 @@ std::unique_ptr<CryptoKey> Certificate::GetPublicKey() const {
 }
 
 std::string Certificate::ExportPEM() const {
-
-    if (this->m_cert == INVALID_CERTIFICATE_HANDLE) 
-        throw std::runtime_error("Invalid certificate.");
 
     BIO* bio = BIO_new(BIO_s_mem());
     if (bio == nullptr) throw SecurityException(ERR_get_error());

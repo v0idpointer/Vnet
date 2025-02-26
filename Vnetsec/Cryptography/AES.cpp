@@ -19,7 +19,7 @@ using namespace Vnet::Security;
 namespace std {
 
     template <>
-    struct std::hash<std::pair<std::int32_t, BlockCipherMode>> {
+    struct hash<std::pair<std::int32_t, BlockCipherMode>> {
 
         std::size_t operator() (const std::pair<std::int32_t, BlockCipherMode>& p) const noexcept {
             const std::size_t h1 = std::hash<std::int32_t>{ } (p.first);
@@ -139,9 +139,6 @@ std::vector<std::uint8_t> AES::Encrypt(
     const BlockCipherMode mode
 ) {
 
-    if (key.GetKey().size() == 0)
-        throw std::invalid_argument("'key': Invalid key.");
-
     if (!AES::s_noIv.contains(mode) && !key.GetIv().has_value())
         throw std::invalid_argument("'key': IV is std::nullopt.");
 
@@ -213,11 +210,17 @@ std::vector<std::uint8_t> AES::Decrypt(
     const BlockCipherMode mode
 ) {
 
-    if (key.GetKey().size() == 0)
-        throw std::invalid_argument("'key': Invalid key.");
-
     if (!AES::s_noIv.contains(mode) && !key.GetIv().has_value())
         throw std::invalid_argument("'key': IV is std::nullopt.");
 
     return AES::Decrypt(key.GetKey(), key.GetIv(), encryptedData, mode);
+}
+
+AesKey AES::GenerateKey(const std::int32_t keySize) {
+    const AesKey key = AES::GenerateKeyAndIV(keySize);
+    return AesKey::Import(key.GetKey(), std::nullopt);
+}
+
+AesKey AES::GenerateKeyAndIV(const std::int32_t keySize) {
+    return AesKey::Generate(keySize);
 }

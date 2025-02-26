@@ -33,6 +33,7 @@ using namespace Vnet;
 
 const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_locations = { 
 
+#ifdef VNET_PLATFORM_WINDOWS
     { CertStoreLocation::CURRENT_SERVICE, CERT_SYSTEM_STORE_CURRENT_SERVICE },
     { CertStoreLocation::CURRENT_USER, CERT_SYSTEM_STORE_CURRENT_USER },
     { CertStoreLocation::CURRENT_USER_GP, CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY },
@@ -41,12 +42,11 @@ const std::unordered_map<CertStoreLocation, std::uint32_t> CertificateStore::s_l
     { CertStoreLocation::LOCAL_MACHINE_GP, CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY },
     { CertStoreLocation::SERVICES, CERT_SYSTEM_STORE_SERVICES },
     { CertStoreLocation::USERS, CERT_SYSTEM_STORE_USERS },
+#endif
 
 };
 
 CertificateStore::CertificateStore(NativeCertStore_t const certStore) : m_certStore(certStore) { }
-
-CertificateStore::CertificateStore() : CertificateStore(INVALID_CERT_STORE_HANDLE) { }
 
 CertificateStore::CertificateStore(CertificateStore&& certStore) noexcept : CertificateStore(INVALID_CERT_STORE_HANDLE) {
     this->operator= (std::move(certStore));
@@ -54,14 +54,20 @@ CertificateStore::CertificateStore(CertificateStore&& certStore) noexcept : Cert
 
 CertificateStore::~CertificateStore() {
 
+#ifdef VNET_PLATFORM_WINDOWS
+
     if (this->m_certStore != INVALID_CERT_STORE_HANDLE) {
         CertCloseStore(this->m_certStore, NULL);
         this->m_certStore = INVALID_CERT_STORE_HANDLE;
     }
 
+#endif
+
 }
 
 CertificateStore& CertificateStore::operator= (CertificateStore&& certStore) noexcept {
+
+#ifdef VNET_PLATFORM_WINDOWS
 
     if (this != &certStore) {
 
@@ -74,6 +80,8 @@ CertificateStore& CertificateStore::operator= (CertificateStore&& certStore) noe
         certStore.m_certStore = INVALID_CERT_STORE_HANDLE;
 
     }
+
+#endif
 
     return static_cast<CertificateStore&>(*this);
 }
@@ -351,9 +359,6 @@ std::vector<std::shared_ptr<Certificate>> CertificateStore::GetCertificates() co
 
 #ifdef VNET_PLATFORM_WINDOWS
 
-    if (this->m_certStore == INVALID_CERT_STORE_HANDLE)
-        throw std::runtime_error("Invalid certificate store.");
-
     std::vector<std::shared_ptr<Certificate>> certs = { };
     PCCERT_CONTEXT pCertContext = nullptr;
     while ((pCertContext = CertEnumCertificatesInStore(this->m_certStore, pCertContext)))
@@ -369,12 +374,6 @@ std::vector<std::shared_ptr<Certificate>> CertificateStore::GetCertificates() co
 void CertificateStore::Add(const Certificate& cert) {
     
 #ifdef VNET_PLATFORM_WINDOWS
-
-    if (this->m_certStore == INVALID_CERT_STORE_HANDLE)
-        throw std::runtime_error("Invalid certificate store.");
-
-    if (cert.GetNativeCertificateHandle() == INVALID_CERTIFICATE_HANDLE)
-        throw std::invalid_argument("'cert': Invalid certificate.");
 
     PCCERT_CONTEXT pCertContext = CertificateToWin32Cert(cert);
     if (!CertAddCertificateContextToStore(this->m_certStore, pCertContext, CERT_STORE_ADD_NEW, nullptr)) {
@@ -397,12 +396,6 @@ void CertificateStore::Add(const Certificate& cert) {
 void CertificateStore::Remove(const Certificate& cert) {
 
 #ifdef VNET_PLATFORM_WINDOWS
-    
-    if (this->m_certStore == INVALID_CERT_STORE_HANDLE)
-        throw std::runtime_error("Invalid certificate store.");
-
-    if (cert.GetNativeCertificateHandle() == INVALID_CERTIFICATE_HANDLE)
-        throw std::invalid_argument("'cert': Invalid certificate.");
 
     const HashAlgorithm hashAlg = HashAlgorithm::SHA1;
     std::vector<std::uint8_t> digest(HashFunction::GetDigestSize(hashAlg));

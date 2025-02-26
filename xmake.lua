@@ -26,6 +26,7 @@ target("Vnethttp")
     add_includedirs("Include")
     add_includedirs("Vnethttp")
     add_defines("VNET_BUILD_VNETHTTP")
+    add_deps("Vnetcore")
 
     if is_plat("windows") then 
         add_files("Vnethttp/VersionInfo.rc")
@@ -61,4 +62,18 @@ target("Vnetsec")
 
     if is_plat("windows") then 
         add_files("Vnetsec/VersionInfo.rc")
+    end
+
+target("Vnetweb")
+    set_kind("shared")
+    set_languages("cxx20")
+    add_files("Vnetweb/Net/*.cpp")
+    add_includedirs("Include")
+    add_includedirs("Vnetweb")
+    add_defines("VNET_BUILD_VNETWEB")
+    add_deps("Vnetcore")
+    add_deps("Vnetsec")
+
+    if is_plat("windows") then 
+        add_files("Vnetweb/VersionInfo.rc")
     end

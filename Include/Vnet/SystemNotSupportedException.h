@@ -20,9 +20,26 @@ namespace Vnet {
     class VNETCOREAPI SystemNotSupportedException : public std::runtime_error {
 
     public:
+
+        /**
+         * Constructs a new SystemNotSupportedException object.
+         */
         SystemNotSupportedException(void);
+
+        /**
+         * Constructs a new SystemNotSupportedException object.
+         * 
+         * @param message An error message.
+         */
         SystemNotSupportedException(const std::string& message);
+
+        /**
+         * Constructs a new SystemNotSupportedException object by copying an existing one.
+         * 
+         * @param other A SystemNotSupportedException object to copy.
+         */
         SystemNotSupportedException(const SystemNotSupportedException& other) noexcept;
+
         SystemNotSupportedException(SystemNotSupportedException&& other) noexcept;
         virtual ~SystemNotSupportedException(void);
 
