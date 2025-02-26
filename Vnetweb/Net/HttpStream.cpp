@@ -23,6 +23,7 @@ using namespace Vnet;
 HttpStream::HttpStream(const NetworkStream& stream)
     : HttpStream(stream.GetSocket(), stream.GetSecureConnection()) { 
     
+    this->m_networkOptions = NetworkOptions::DEFAULT_OPTIONS;
     this->m_httpOptions = HttpParserOptions::DEFAULT_OPTIONS;
     this->m_transferEncoding = TransferEncoding::NONE;
 
@@ -41,6 +42,7 @@ HttpStream& HttpStream::operator= (const HttpStream& stream) {
     
     if (this != &stream) {
         NetworkStream::operator= (stream);
+        this->m_networkOptions = stream.m_networkOptions;
         this->m_httpOptions = stream.m_httpOptions;
         this->m_transferEncoding = stream.m_transferEncoding;
     }
@@ -52,6 +54,7 @@ HttpStream& HttpStream::operator= (HttpStream&& stream) noexcept {
     
     if (this != &stream) {
         NetworkStream::operator= (std::move(stream));
+        this->m_networkOptions = std::move(stream.m_networkOptions);
         this->m_httpOptions = std::move(stream.m_httpOptions);
         this->m_transferEncoding = stream.m_transferEncoding;
     }
@@ -80,7 +83,7 @@ std::list<std::pair<std::vector<std::uint8_t>, std::size_t>> HttpStream::ReadDat
             continue;
         }
 
-        if ((totalSize + available) > 16777216) // 16 MB, TODO: read this value from some config?
+        if (this->m_networkOptions.MaxReadLimit && ((totalSize + available) > *this->m_networkOptions.MaxReadLimit))
             throw NetworkException("Read limit exceeded.");
 
         std::int32_t read = 0;
@@ -270,13 +273,12 @@ TransferEncoding HttpStream::ReceiveHttpMessage(T& msg) {
 
 std::int32_t HttpStream::SendData(const std::span<const std::uint8_t> data) const {
 
-    const std::int32_t chunkSize = 16384; // 16kB, TODO: read this value from a config.
     std::size_t offset = 0;
     std::int32_t sent = 0;
 
     while (offset < data.size()) {
 
-        std::size_t len = chunkSize;
+        std::size_t len = this->m_networkOptions.ChunkSize;
         if ((offset + len) > data.size())
             len = (data.size() - offset);
 
@@ -355,6 +357,18 @@ void HttpStream::SendHttpMessage(const T& msg) const {
 
     }
 
+}
+
+const NetworkOptions& HttpStream::GetNetworkOptions() const {
+    return this->m_networkOptions;
+}
+
+NetworkOptions& HttpStream::GetNetworkOptions() {
+    return this->m_networkOptions;
+}
+
+void HttpStream::SetNetworkOptions(const NetworkOptions& options) {
+    this->m_networkOptions = options;
 }
 
 const HttpParserOptions& HttpStream::GetHttpOptions() const {

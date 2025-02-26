@@ -403,7 +403,7 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
 
     /* copy the payload */
 
-    if (str.empty() && contentLength.has_value() && (contentLength.value() != 0)) {
+    /* if (str.empty() && contentLength.has_value() && (contentLength.value() != 0)) {
 
         if (exceptions) throw HttpParserException(
             "HTTP parser error: bad HTTP request: bad message body: payload empty.",
@@ -411,7 +411,9 @@ std::optional<HttpRequest> HttpRequest::ParseRequest(std::span<const std::uint8_
         );
 
         return std::nullopt;
-    }
+    } */
+   
+    if (str.empty()) return request;
 
     if (!contentLength.has_value()) {
 

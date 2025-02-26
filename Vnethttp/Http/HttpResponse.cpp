@@ -338,7 +338,7 @@ std::optional<HttpResponse> HttpResponse::ParseResponse(std::span<const std::uin
 
     /* copy the payload */
    
-    if (str.empty() && contentLength.has_value() && (contentLength.value() != 0)) {
+    /* if (str.empty() && contentLength.has_value() && (contentLength.value() != 0)) {
 
         if (exceptions) throw HttpParserException(
             "HTTP parser error: bad HTTP response: bad message body: payload empty.",
@@ -346,7 +346,9 @@ std::optional<HttpResponse> HttpResponse::ParseResponse(std::span<const std::uin
         );
 
         return std::nullopt;
-    }
+    } */
+
+    if (str.empty()) return response;
 
     if (!contentLength.has_value()) {
 

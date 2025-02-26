@@ -9,6 +9,7 @@
 #include <Vnet/Http/HttpRequest.h>
 #include <Vnet/Http/HttpResponse.h>
 #include <Vnet/Net/NetworkStream.h>
+#include <Vnet/Net/NetworkOptions.h>
 #include <Vnet/Net/TransferEncoding.h>
 
 #include <utility>
@@ -23,6 +24,7 @@ namespace Vnet::Net {
     class VNETWEBAPI HttpStream : public NetworkStream {
 
     private:
+        NetworkOptions m_networkOptions;
         Vnet::Http::HttpParserOptions m_httpOptions;
         TransferEncoding m_transferEncoding;
 
@@ -49,6 +51,27 @@ namespace Vnet::Net {
     public:
 
         /**
+         * Returns the collection of network-related options.
+         * 
+         * @returns NetworkOptions.
+         */
+        const NetworkOptions& GetNetworkOptions(void) const;
+        
+        /**
+         * Returns the collection of network-related options.
+         * 
+         * @returns NetworkOptions.
+         */
+        NetworkOptions& GetNetworkOptions(void);
+        
+        /**
+         * Sets the collection of network-related options.
+         * 
+         * @param options NetworkOptions
+         */
+        void SetNetworkOptions(const NetworkOptions& options);
+
+        /**
          * Returns the collection of options used by the HTTP parser.
          * 
          * @returns An HttpParserOptions.
@@ -65,7 +88,7 @@ namespace Vnet::Net {
         /**
          * Sets the collection of options used by the HTTP parser.
          * 
-         * @param options
+         * @param options HttpParserOptions
          */
         void SetHttpOptions(const Vnet::Http::HttpParserOptions& options);
 
