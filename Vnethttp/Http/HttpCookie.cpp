@@ -1,24 +1,26 @@
 /*
     Vnet: Networking library for C++
-    Copyright (c) 2024 V0idPointer
+    Copyright (c) 2024-2025 V0idPointer
 */
 
 #include <Vnet/Http/HttpCookie.h>
+#include <Vnet/Http/HttpParserException.h>
 
 #include <sstream>
 #include <vector>
-#include <exception>
-#include <stdexcept>
+#include <algorithm>
+#include <unordered_set>
 
 using namespace Vnet;
 using namespace Vnet::Http;
 
-HttpCookie::HttpCookie() : HttpCookie("", "") { }
+HttpCookie::HttpCookie() : HttpCookie("NewCookie", "") { }
 
 HttpCookie::HttpCookie(const std::string_view name, const std::string_view value) {
 
-    this->m_name = name;
-    this->m_value = value;
+    this->SetName(name);
+    this->SetValue(value);
+
     this->m_expirationDate = std::nullopt;
     this->m_maxAge = std::nullopt;
     this->m_domain = std::nullopt;
@@ -125,11 +127,45 @@ const std::optional<SameSiteAttribute> HttpCookie::GetSameSite() const {
 }
 
 void HttpCookie::SetName(const std::string_view name) {
+
+    if (name.empty())
+        throw std::invalid_argument("'name': Empty string.");
+
+    const std::unordered_set<char> specialCharacters = {
+        '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'
+    };
+
+    std::string_view::const_iterator it;
+    it = std::find_if(name.begin(), name.end(), [&] (const char ch) -> bool {
+
+        if ((ch >= 'A') && (ch <= 'Z')) return false;
+        if ((ch >= 'a') && (ch <= 'z')) return false;
+        if ((ch >= '0') && (ch <= '9')) return false;
+        if (specialCharacters.contains(ch)) return false;
+
+        return true;
+    });
+
+    if (it != name.end()) 
+        throw std::invalid_argument("'name': Invalid cookie name.");
+
     this->m_name = name;
+
 }
 
 void HttpCookie::SetValue(const std::string_view value) {
+
+    std::string_view::const_iterator it;
+    it = std::find_if(value.begin(), value.end(), [] (const char ch) -> bool {
+        if ((ch >= 0x20) && (ch < 0x7F)) return false;
+        else return true;
+    });
+
+    if (it != value.end())
+        throw std::invalid_argument("'value': Invalid cookie value.");
+
     this->m_value = value;
+
 }
 
 void HttpCookie::SetExpirationDate(const std::optional<DateTime> expirationDate) {
@@ -157,14 +193,32 @@ void HttpCookie::SetHttpOnly(const std::optional<bool> httpOnly) {
 }
 
 void HttpCookie::SetSameSite(const std::optional<SameSiteAttribute> sameSite) {
+
+    if (sameSite.has_value()) {
+
+        switch (sameSite.value()) {
+
+        case SameSiteAttribute::NONE:
+        case SameSiteAttribute::LAX:
+        case SameSiteAttribute::STRICT:
+            break;
+
+        default:
+            throw std::invalid_argument("'sameSite': Invalid value.");
+
+        }
+
+    }
+
     this->m_sameSite = sameSite;
+
 }
 
 std::string HttpCookie::ToString() const {
 
     std::ostringstream stream;
 
-    stream << this->m_name << "=" << this->m_value;
+    stream << this->m_name << "=" << HttpCookie::CharacterEscapeValue(this->m_value);
 
     if (this->m_expirationDate.has_value()) 
         stream << "; Expires=" << this->m_expirationDate->ToUTCString();
@@ -209,7 +263,109 @@ std::string HttpCookie::ToString() const {
     return stream.str();
 }
 
-void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attrib) {
+// this is fucking horrible
+bool HttpCookie::IsValidValue(std::string_view str) {
+    
+    // check if the string contains control characters:
+    std::string_view::const_iterator it;
+    it = std::find_if(str.begin(), str.end(), [] (const char ch) -> bool {
+        if ((ch >= 0x20) && (ch < 0x7F)) return false;
+        else return true;
+    });
+
+    if (it != str.end()) return false;
+
+    // string is quoted: check if backslashes are followed either by another backslash or a double quote marks.
+    if (str.starts_with('"') && str.ends_with('"') && (!str.ends_with("\\\"") || str.ends_with("\\\\\""))) {
+
+        str = str.substr(1, str.length() - 2);
+        it = std::find_if(str.begin(), str.end(), [=] (const char& ch) -> bool {
+            
+            if (ch == '\\') {
+
+                const char& next = *(std::next(&ch));
+
+                if (&ch != str.data() && (*(std::prev(&ch)) == '\\'))
+                    return false;
+
+                return ((next != '"') && (next != '\\'));
+            }
+            
+            return false;
+        });
+
+        return (it == str.end());
+    }
+
+    // string is not quoted: check if it contains any of the following disallowed characters.
+    else {
+
+        const std::unordered_set<char> specialCharacters = {
+            ' ', ',', ';', '(', ')', '<', '>', '@', ':', '\\', '"', '/',
+            '[', ']', '?', '=', '{', '}'
+        };
+
+        it = std::find_if(str.begin(), str.end(), [&] (const char ch) -> bool {
+            return specialCharacters.contains(ch);
+        });
+
+        return (it == str.end());
+    }
+
+}
+
+std::string HttpCookie::CharacterEscapeValue(std::string_view str) {
+
+    std::ostringstream stream;
+    stream << '"';
+
+    for (std::size_t i = 0; i < str.length(); ++i) {
+        if ((str[i] == '\\') || str[i] == '"') stream << '\\' << str[i];
+        else stream << str[i];
+    }
+
+    stream << '"';
+
+    return stream.str();
+}
+
+std::string HttpCookie::CharacterUnescapeValue(std::string_view str) {
+    
+    str = str.substr(1, str.length() - 2);
+
+    std::ostringstream stream;
+    for (std::size_t i = 0; i < str.length(); ++i) {
+
+        if (str[i] == '\\') { 
+            stream << str[i + 1];
+            ++i;
+        }
+        else stream << str[i];
+
+    }
+
+    return stream.str();
+}
+
+static inline bool EqualsIgnoreCase(const std::string_view strA, const std::string_view strB) noexcept {
+
+    if (strA.length() != strB.length()) return false;
+
+    return std::equal(
+        strA.begin(),
+        strA.end(),
+        strB.begin(),
+        strB.end(),
+        [] (char a, char b) -> bool {
+            if ((a >= 'A') && (a <= 'Z')) a += ('a' - 'A');
+            if ((b >= 'A') && (b <= 'Z')) b += ('a' - 'A');
+            return (a == b);
+        }
+    );
+
+}
+
+void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attrib, const HttpParserOptions& options) {
     
     if (attrib.starts_with("Expires=")) {
 
@@ -239,12 +395,22 @@ void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attri
     }
 
     if (attrib.starts_with("Domain=")) {
-        cookie.SetDomain(attrib.substr(7));
+        
+        try { cookie.SetDomain(attrib.substr(7)); }
+        catch (const std::exception&) {
+            throw std::runtime_error("'Domain' attribute: URI malformed.");
+        }
+
         return;
     }
 
     if (attrib.starts_with("Path=")) {
-        cookie.SetPath(attrib.substr(5));
+        
+        try { cookie.SetPath(attrib.substr(5)); }
+        catch (const std::exception&) {
+            throw std::runtime_error("'Path' attribute: URI malformed.");
+        }
+
         return;
     }
 
@@ -252,9 +418,9 @@ void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attri
         
         attrib = attrib.substr(9);
 
-        if (attrib == "None") cookie.SetSameSite(SameSiteAttribute::NONE);
-        else if (attrib == "Lax") cookie.SetSameSite(SameSiteAttribute::LAX);
-        else if (attrib == "Strict") cookie.SetSameSite(SameSiteAttribute::STRICT);
+        if (EqualsIgnoreCase(attrib, "None")) cookie.SetSameSite(SameSiteAttribute::NONE);
+        else if (EqualsIgnoreCase(attrib, "Lax")) cookie.SetSameSite(SameSiteAttribute::LAX);
+        else if (EqualsIgnoreCase(attrib, "Strict")) cookie.SetSameSite(SameSiteAttribute::STRICT);
         else throw std::runtime_error("'SameSite' attribute: invalid value.");
 
         return;
@@ -275,35 +441,94 @@ void HttpCookie::ParseCookieAttribute(HttpCookie& cookie, std::string_view attri
         attrib = attrib.substr(0, pos);
 
     std::ostringstream stream;
-    stream << "'" << attrib << "' is not a valid attribute.";
+    stream << "'" << attrib << "' attribute: invalid attribute.";
 
     throw std::runtime_error(stream.str());
 
 }
 
-std::optional<HttpCookie> HttpCookie::ParseCookie(std::string_view str, const bool exceptions) {
+static std::vector<std::string> SplitString(const std::string_view str) {
+
+    std::vector<std::string> strings = { };
+    std::ostringstream stream;
+    bool quotes = false;
+
+    for (std::size_t i = 0; i < str.length(); ++i) {
+
+        if ((str[i] == '"') && ((i == 0) || (str[i - 1] != '\\'))) {
+            quotes = !quotes;
+            stream << '"';
+        }
+        else if ((str[i] == ';') && !quotes && (i < str.length()) && (str[i + 1] == ' ')) {
+            strings.push_back(stream.str());
+            stream.str("");
+            ++i;
+        }
+        else stream << str[i];
+
+    }
+
+    strings.push_back(stream.str());
+
+    return strings;
+}
+
+std::optional<HttpCookie> HttpCookie::ParseCookie(std::string_view str, const HttpParserOptions& options, const bool exceptions) {
+
+    if (str.empty()) {
+        if (exceptions) throw std::invalid_argument("'str': Empty string.");
+        return std::nullopt;
+    }
 
     std::size_t pos = 0;
-    std::vector<std::string_view> v = { };
-
-    while ((pos = str.find("; ")) != std::string_view::npos) {
-        v.push_back(str.substr(0, pos));
-        str = str.substr(pos + 2);
-    }
-    v.push_back(str);
+    std::vector<std::string> v = { };
+    v = SplitString(str);
 
     pos = v[0].find('=');
-    const std::string_view name = v[0].substr(0, pos);
-    const std::string_view value = v[0].substr(pos + 1);
-    // TODO: check if name and value are valid.
+    const std::string name = v[0].substr(0, pos);
+    const std::string value = v[0].substr(pos + 1);
 
-    HttpCookie cookie = { name, value };
+    if (pos == std::string::npos) {
+        if (exceptions) throw HttpParserException("HTTP parser error: bad HTTP cookie.", std::nullopt);
+        return std::nullopt;
+    }
+
+    HttpCookie cookie;
+
+    if (!HttpCookie::IsValidValue(value)) {
+        if (exceptions) throw HttpParserException("HTTP parser error: bad HTTP cookie: bad cookie value.", std::nullopt);
+        return std::nullopt;
+    }
+
+    try { cookie.SetName(name); }
+    catch (const std::invalid_argument&) {
+        if (exceptions) throw HttpParserException("HTTP parser error: bad HTTP cookie: bad cookie name.", std::nullopt);
+        return std::nullopt;
+    }
+
+    try { 
+        
+        if (value.starts_with('"') && value.ends_with('"') && (!str.ends_with("\\\"") || str.ends_with("\\\\\"")))
+            cookie.SetValue(HttpCookie::CharacterUnescapeValue(value));
+        else cookie.SetValue(value);
+
+    }
+    catch (const std::invalid_argument&) {
+        if (exceptions) throw HttpParserException("HTTP parser error: bad HTTP cookie: bad cookie value.", std::nullopt);
+        return std::nullopt;
+    }
 
     for (std::size_t i = 1; i < v.size(); ++i) {
 
-        try { HttpCookie::ParseCookieAttribute(cookie, v[i]); }
-        catch (const std::exception&) {
-            if (exceptions) throw std::runtime_error("Bad HTTP cookie.");
+        try { HttpCookie::ParseCookieAttribute(cookie, v[i], options); }
+        catch (const std::exception& ex) {
+
+            using namespace std::string_literals;
+            if (exceptions) throw HttpParserException(
+                ("HTTP parser error: bad HTTP cookie: "s + ex.what()),
+                std::nullopt
+            );
+
             return std::nullopt;
         }
 
@@ -313,9 +538,17 @@ std::optional<HttpCookie> HttpCookie::ParseCookie(std::string_view str, const bo
 }
 
 HttpCookie HttpCookie::Parse(const std::string_view str) {
-    return HttpCookie::ParseCookie(str, true).value();
+    return HttpCookie::Parse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+HttpCookie HttpCookie::Parse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpCookie::ParseCookie(str, options, true).value();
 }
 
 std::optional<HttpCookie> HttpCookie::TryParse(const std::string_view str) {
-    return HttpCookie::ParseCookie(str, false);
+    return HttpCookie::TryParse(str, HttpParserOptions::DEFAULT_OPTIONS);
+}
+
+std::optional<HttpCookie> HttpCookie::TryParse(const std::string_view str, const HttpParserOptions& options) {
+    return HttpCookie::ParseCookie(str, options, false);
 }
