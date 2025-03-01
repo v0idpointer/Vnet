@@ -316,6 +316,18 @@ bool HttpCookie::IsValidValue(std::string_view str) {
 
 std::string HttpCookie::CharacterEscapeValue(std::string_view str) {
 
+    const std::unordered_set<char> specialCharacters = {
+        ' ', ',', ';', '(', ')', '<', '>', '@', ':', '\\', '"', '/',
+        '[', ']', '?', '=', '{', '}'
+    };
+
+    std::string_view::const_iterator it;
+    it = std::find_if(str.begin(), str.end(), [&] (const char ch) -> bool {
+        return specialCharacters.contains(ch);
+    });
+
+    if (it == str.end()) return std::string(str);
+
     std::ostringstream stream;
     stream << '"';
 
