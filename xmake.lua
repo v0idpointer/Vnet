@@ -68,10 +68,12 @@ target("Vnetweb")
     set_kind("shared")
     set_languages("cxx20")
     add_files("Vnetweb/Net/*.cpp")
+    add_files("Vnetweb/Web/*.cpp")
     add_includedirs("Include")
     add_includedirs("Vnetweb")
     add_defines("VNET_BUILD_VNETWEB")
     add_deps("Vnetcore")
+    add_deps("Vnethttp")
     add_deps("Vnetsec")
 
     if is_plat("windows") then 
