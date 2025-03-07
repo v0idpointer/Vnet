@@ -26,6 +26,9 @@ HttpParserOptions::HttpParserOptions() {
     this->MaxResponseStatusCodeReasonPhraseLength = std::nullopt;
     this->AllowNonstandardResponseStatusCodes = false;
     this->MaxPayloadSize = std::nullopt;
+    this->IgnoreNonstandardCookieAttributes = false;
+    this->BypassIsValidCookieValueCheck = false;
+    this->IgnoreMissingWhitespaceAfterCookieAttributeSeparator = false;
 
 }
 
@@ -50,6 +53,9 @@ HttpParserOptions& HttpParserOptions::operator= (const HttpParserOptions& option
         this->MaxResponseStatusCodeReasonPhraseLength = options.MaxResponseStatusCodeReasonPhraseLength;
         this->AllowNonstandardResponseStatusCodes = options.AllowNonstandardResponseStatusCodes;
         this->MaxPayloadSize = options.MaxPayloadSize;
+        this->IgnoreNonstandardCookieAttributes = options.IgnoreNonstandardCookieAttributes;
+        this->BypassIsValidCookieValueCheck = options.BypassIsValidCookieValueCheck;
+        this->IgnoreMissingWhitespaceAfterCookieAttributeSeparator = options.IgnoreMissingWhitespaceAfterCookieAttributeSeparator;
 
     }
 

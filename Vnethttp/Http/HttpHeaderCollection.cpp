@@ -9,6 +9,7 @@
 
 #include <Vnet/Http/HttpHeaderCollection.h>
 #include <Vnet/Http/HttpParserException.h>
+#include <Vnet/Util/String.h>
 
 #include <algorithm>
 #include <vector>
@@ -46,22 +47,6 @@ bool HttpHeaderCollection::operator== (const HttpHeaderCollection& headers) cons
     return (this->ToString() == headers.ToString());
 }
 
-static inline bool StrEqualsIgnoreCase(const std::string_view lhs, const std::string_view rhs) noexcept {
-
-    return std::equal(
-        lhs.begin(),
-        lhs.end(),
-        rhs.begin(),
-        rhs.end(),
-        [] (char a, char b) -> bool {
-            if ((a >= 'A') && (a <= 'Z')) a += ('a' - 'A');
-            if ((b >= 'A') && (b <= 'Z')) b += ('a' - 'A');
-            return (a == b);
-        }
-    );
-
-}
-
 std::list<HttpHeader>::const_iterator HttpHeaderCollection::begin() const {
     return this->m_headers.begin();
 }
@@ -74,7 +59,7 @@ const HttpHeader& HttpHeaderCollection::Get(const std::string_view name) const {
     
     std::list<HttpHeader>::const_iterator it;
     it = std::find_if(this->m_headers.begin(), this->m_headers.end(), [=] (const HttpHeader& header) -> bool {
-        return StrEqualsIgnoreCase(header.GetName(), name);
+        return EqualsIgnoreCase(header.GetName(), name);
     });
 
     if (it == this->m_headers.end())
@@ -95,7 +80,7 @@ bool HttpHeaderCollection::Contains(const std::string_view name) const {
     
     std::list<HttpHeader>::const_iterator it;
     it = std::find_if(this->m_headers.begin(), this->m_headers.end(), [&] (const HttpHeader& header) -> bool {
-        return StrEqualsIgnoreCase(name, header.GetName());
+        return EqualsIgnoreCase(name, header.GetName());
     });
 
     return (it != this->m_headers.end());
@@ -116,7 +101,7 @@ bool HttpHeaderCollection::IsSpecialHeader(const std::string_view name) {
 
     const std::string_view* it;
     it = std::find_if(begin, end, [=] (const std::string_view str) -> bool {
-        return StrEqualsIgnoreCase(str, name);
+        return EqualsIgnoreCase(str, name);
     });
 
     return (it != end);
@@ -126,7 +111,7 @@ void HttpHeaderCollection::AppendHeaderValue(const std::string_view name, const 
 
     std::list<HttpHeader>::iterator it;
     it = std::find_if(this->m_headers.begin(), this->m_headers.end(), [=] (const HttpHeader& header) -> bool {
-        return StrEqualsIgnoreCase(header.GetName(), name);
+        return EqualsIgnoreCase(header.GetName(), name);
     });
 
     if (it == this->m_headers.end()) throw std::runtime_error("AppendHeaderValue: it == this->m_headers.end()");
@@ -192,7 +177,7 @@ void HttpHeaderCollection::Remove(const HttpHeader& header) {
 void HttpHeaderCollection::Remove(const std::string_view name) {
 
     this->m_headers.remove_if([=] (const HttpHeader& header) -> bool {
-        return StrEqualsIgnoreCase(header.GetName(), name);
+        return EqualsIgnoreCase(header.GetName(), name);
     });
 
 }

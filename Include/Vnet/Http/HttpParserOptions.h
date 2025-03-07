@@ -106,6 +106,30 @@ namespace Vnet::Http {
          */
         std::optional<std::size_t> MaxPayloadSize;
 
+        /**
+         * 
+         * 
+         * Default value: false
+         * Used by: HttpCookie
+         */
+        bool IgnoreNonstandardCookieAttributes;
+
+        /**
+         * 
+         * 
+         * Default value: false
+         * Used by: HttpCookie
+         */
+        bool BypassIsValidCookieValueCheck;
+
+        /**
+         * 
+         * 
+         * Default value: false
+         * Used by: HttpCookie
+         */
+        bool IgnoreMissingWhitespaceAfterCookieAttributeSeparator;
+
         /** Default HTTP parser options. */
         static const HttpParserOptions DEFAULT_OPTIONS;
 

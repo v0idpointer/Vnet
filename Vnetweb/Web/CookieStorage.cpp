@@ -6,8 +6,6 @@
 #include <Vnet/Web/CookieStorage.h>
 #include <Vnet/Http/HttpException.h>
 
-#include <algorithm>
-
 using namespace Vnet;
 using namespace Vnet::Http;
 using namespace Vnet::Web;
@@ -65,39 +63,18 @@ std::vector<std::string> CookieStorage::GetDomains(const Uri& uri) {
     return domains;
 }
 
-static inline bool EqualsIgnoreCase(const std::string_view lhs, const std::string_view rhs) noexcept {
-
-    return std::equal(
-        lhs.begin(),
-        lhs.end(),
-        rhs.begin(),
-        rhs.end(),
-        [] (char a, char b) -> bool {
-            if ((a >= 'A') && (a <= 'Z')) a += ('a' - 'A');
-            if ((b >= 'A') && (b <= 'Z')) b += ('a' - 'A');
-            return (a == b);
-        }
-    );
-
-}
-
-static inline bool IsValidUriScheme(const Uri& uri) noexcept {
-    if (!uri.GetScheme().has_value()) return false;
-    return (EqualsIgnoreCase(uri.GetScheme().value(), "http") || EqualsIgnoreCase(uri.GetScheme().value(), "https"));
-}
-
 HttpCookieCollection CookieStorage::GetCookies(const Uri& requestUri) const {
 
     if (requestUri.IsRelativeUri())
         throw std::invalid_argument("'requestUri': Relative URI.");
 
-    if (!IsValidUriScheme(requestUri))
+    if ((requestUri.GetScheme() != "http") && (requestUri.GetScheme() != "https"))
         throw std::invalid_argument("'requestUri': Unsupported scheme.");
 
     if (!requestUri.GetHost().has_value())
         throw std::invalid_argument("'requestUri': Host component is std::nullopt.");
 
-    const bool secure = EqualsIgnoreCase(requestUri.GetScheme().value(), "https");
+    const bool secure = (requestUri.GetScheme() == "https");
 
     HttpCookieCollection collection = { };
     for (const std::string& domain : CookieStorage::GetDomains(requestUri)) {
@@ -125,7 +102,7 @@ void CookieStorage::AddCookie(const Uri& requestUri, HttpCookie cookie) {
     if (requestUri.IsRelativeUri())
         throw std::invalid_argument("'requestUri': Relative URI.");
 
-    if (!IsValidUriScheme(requestUri))
+    if ((requestUri.GetScheme() != "http") && (requestUri.GetScheme() != "https"))
         throw std::invalid_argument("'requestUri': Unsupported scheme.");
 
     if (!requestUri.GetHost().has_value())
@@ -152,7 +129,7 @@ void CookieStorage::AddCookie(const Uri& requestUri, HttpCookie cookie) {
 
     }
 
-    if (cookie.IsSecure().value_or(false) && !EqualsIgnoreCase(requestUri.GetScheme().value(), "https"))
+    if (cookie.IsSecure().value_or(false) && (requestUri.GetScheme() != "https"))
         throw HttpException("Cookie rejected: 'Secure' cookie sent over HTTP.");
 
     if (cookie.GetName().starts_with("__Secure-") && !cookie.IsSecure().value_or(false))
@@ -181,7 +158,7 @@ void CookieStorage::RemoveCookie(const Uri& requestUri, const HttpCookie& cookie
     if (requestUri.IsRelativeUri())
     throw std::invalid_argument("'requestUri': Relative URI.");
 
-    if (!IsValidUriScheme(requestUri))
+    if ((requestUri.GetScheme() != "http") && (requestUri.GetScheme() != "https"))
         throw std::invalid_argument("'requestUri': Unsupported scheme.");
 
     if (!requestUri.GetHost().has_value())
@@ -201,7 +178,7 @@ void CookieStorage::ClearCookies(const Uri& requestUri) {
     if (requestUri.IsRelativeUri())
         throw std::invalid_argument("'requestUri': Relative URI.");
 
-    if (!IsValidUriScheme(requestUri))
+    if ((requestUri.GetScheme() != "http") && (requestUri.GetScheme() != "https"))
         throw std::invalid_argument("'requestUri': Unsupported scheme.");
 
     if (!requestUri.GetHost().has_value())
