@@ -6,6 +6,8 @@
 #include <Vnet/Web/CookieStorage.h>
 #include <Vnet/Http/HttpException.h>
 
+#include <sstream>
+
 using namespace Vnet;
 using namespace Vnet::Http;
 using namespace Vnet::Web;
@@ -191,4 +193,60 @@ void CookieStorage::ClearCookies(const Uri& requestUri) {
 
 void CookieStorage::ClearCookies() {
     for (auto& [_, collection] : this->m_collections) collection.Clear();
+}
+
+std::string CookieStorage::ToString() const {
+
+#ifdef VNET_PLATFORM_WINDOWS
+    const std::string_view NEWLINE = "\r\n";
+#else
+    const std::string_view NEWLINE = "\n";
+#endif
+
+    std::ostringstream stream;
+    stream << "# Netscape HTTP Cookie File" << NEWLINE;
+    stream << "# Vnetweb/" << VNET_VERSION_MAJOR << "." << VNET_VERSION_MINOR;
+    stream << NEWLINE << NEWLINE;
+
+    for (const auto& [domain, collection] : this->m_collections) {
+        for (const HttpCookie& cookie : collection) {
+
+            if (cookie.GetMaxAge().has_value())
+                stream << "# Max-Age=" << cookie.GetMaxAge().value() << NEWLINE;
+
+            if (cookie.IsHttpOnly().value_or(false))
+                stream << "# HttpOnly" << NEWLINE;
+
+            if (cookie.GetSameSite().has_value()) {
+
+                switch (cookie.GetSameSite().value()) {
+
+                case SameSiteAttribute::NONE:
+                    stream << "# SameSite=None" << NEWLINE;
+                    break;
+
+                case SameSiteAttribute::LAX:
+                    stream << "# SameSite=Lax" << NEWLINE;
+                    break;
+
+                case SameSiteAttribute::STRICT:
+                    stream << "# SameSite=Strict" << NEWLINE;
+                    break;
+
+                }
+
+            }
+
+            stream << cookie.GetDomain().value_or(domain) << '\t'; // domain name
+            stream << (cookie.GetDomain().has_value() ? "TRUE" : "FALSE") << '\t'; // include subdomains
+            stream << cookie.GetPath().value_or("/") << '\t'; // path
+            stream << (cookie.IsSecure().value_or(false) ? "TRUE" : "FALSE") << '\t'; // https only
+            stream << cookie.GetExpirationDate().value_or(DateTime::MIN_DATE).GetTime() << '\t'; // expiration date
+            stream << cookie.GetName() << '\t';
+            stream << cookie.GetValue() << NEWLINE;
+
+        }
+    }
+
+    return stream.str();
 }

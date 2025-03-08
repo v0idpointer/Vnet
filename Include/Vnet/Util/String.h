@@ -10,6 +10,7 @@
 #include <string_view>
 #include <algorithm>
 #include <cctype>
+#include <vector>
 
 /**
  * 
@@ -120,6 +121,90 @@ inline bool CaseInsensitiveEndsWith(const std::string_view str, const std::strin
         return (a == b);
     });
 
+}
+
+/**
+ * 
+ * 
+ * @param str
+ * @param delim
+ * @returns
+ */
+inline std::vector<std::string> Split(std::string_view str, const char delim) {
+
+    std::size_t pos = 0;
+    std::vector<std::string> tokens = { };
+
+    while ((pos = str.find(delim)) != std::string_view::npos) {
+        tokens.emplace_back(std::string(str.substr(0, pos)));
+        str = str.substr((pos + 1));
+    }
+    tokens.emplace_back(std::string(str));
+
+    return tokens;
+}
+
+/**
+ * 
+ * 
+ * @param str
+ * @param delim
+ * @returns
+ */
+inline std::vector<std::string> Split(std::string_view str, const std::string_view delim) {
+
+    std::size_t pos = 0;
+    std::vector<std::string> tokens = { };
+
+    while ((pos = str.find(delim)) != std::string_view::npos) {
+        tokens.emplace_back(std::string(str.substr(0, pos)));
+        str = str.substr((pos + delim.length()));
+    }
+    tokens.emplace_back(std::string(str));
+
+    return tokens;
+}
+
+/**
+ * 
+ * 
+ * @param str
+ * @param delim
+ * @returns
+ */
+inline std::vector<std::string_view> SplitNonOwning(std::string_view str, const char delim) {
+    
+    std::size_t pos = 0;
+    std::vector<std::string_view> tokens = { };
+
+    while ((pos = str.find(delim)) != std::string_view::npos) {
+        tokens.emplace_back(str.substr(0, pos));
+        str = str.substr((pos + 1));
+    }
+    tokens.emplace_back(str);
+
+    return tokens;
+}
+
+/**
+ * 
+ * 
+ * @param str
+ * @param delim
+ * @returns
+ */
+inline std::vector<std::string_view> SplitNonOwning(std::string_view str, const std::string_view delim) {
+
+    std::size_t pos = 0;
+    std::vector<std::string_view> tokens = { };
+
+    while ((pos = str.find(delim)) != std::string_view::npos) {
+        tokens.emplace_back(str.substr(0, pos));
+        str = str.substr((pos + delim.length()));
+    }
+    tokens.emplace_back(str);
+
+    return tokens;
 }
 
 #endif // _VNET_UTIL_STRING_H_

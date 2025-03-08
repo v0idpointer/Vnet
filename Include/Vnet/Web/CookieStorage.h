@@ -115,6 +115,13 @@ namespace Vnet::Web {
          */
         void ClearCookies(void);
 
+        /**
+         * Exports all HTTP cookies in the Netscape HTTP cookie file format.
+         * 
+         * @returns A string.
+         */
+        std::string ToString(void) const;
+
     };
 
 }

@@ -391,7 +391,6 @@ std::optional<DateTime> DateTime::ParseDateFromUTCString(std::string_view str, c
         return std::nullopt;
     }
 
-    tm.tm_isdst = -1;
     std::time_t time = std::mktime(&tm);
     time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(hourOffset)).count();
     time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes(minuteOffset)).count();
