@@ -15,7 +15,7 @@
 using namespace Vnet;
 using namespace Vnet::Http;
 
-HttpCookie::HttpCookie() : HttpCookie("NewCookie", "") { }
+HttpCookie::HttpCookie() : HttpCookie("MyCookie", "") { }
 
 HttpCookie::HttpCookie(const std::string_view name, const std::string_view value) {
 
@@ -485,6 +485,11 @@ std::optional<HttpCookie> HttpCookie::ParseCookie(std::string_view str, const Ht
 
     if (str.empty()) {
         if (exceptions) throw std::invalid_argument("'str': Empty string.");
+        return std::nullopt;
+    }
+
+    if (options.MaxCookieSize.has_value() && (str.length() > *options.MaxCookieSize)) {
+        if (exceptions) throw HttpParserException("HTTP parser error: bad HTTP cookie: cookie too large.", std::nullopt);
         return std::nullopt;
     }
 

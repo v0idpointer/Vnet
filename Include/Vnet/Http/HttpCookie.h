@@ -33,7 +33,7 @@ namespace Vnet::Http {
         /**
          * Constructs a new HttpCookie object.
          * 
-         * The name of the newly created cookie is "NewCookie",
+         * The name of the newly created cookie is "MyCookie",
          * and the value is an empty string.
          */
         HttpCookie(void);

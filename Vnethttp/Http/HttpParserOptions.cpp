@@ -29,6 +29,7 @@ HttpParserOptions::HttpParserOptions() {
     this->IgnoreNonstandardCookieAttributes = false;
     this->BypassIsValidCookieValueCheck = false;
     this->IgnoreMissingWhitespaceAfterCookieAttributeSeparator = false;
+    this->MaxCookieSize = std::nullopt;
 
 }
 
@@ -56,6 +57,7 @@ HttpParserOptions& HttpParserOptions::operator= (const HttpParserOptions& option
         this->IgnoreNonstandardCookieAttributes = options.IgnoreNonstandardCookieAttributes;
         this->BypassIsValidCookieValueCheck = options.BypassIsValidCookieValueCheck;
         this->IgnoreMissingWhitespaceAfterCookieAttributeSeparator = options.IgnoreMissingWhitespaceAfterCookieAttributeSeparator;
+        this->MaxCookieSize = options.MaxCookieSize;
 
     }
 

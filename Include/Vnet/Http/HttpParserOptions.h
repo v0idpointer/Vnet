@@ -130,6 +130,14 @@ namespace Vnet::Http {
          */
         bool IgnoreMissingWhitespaceAfterCookieAttributeSeparator;
 
+        /**
+         * The maximum size (in bytes) for an HTTP cookie (including name, value and all attributes).
+         * 
+         * Default value: /
+         * Used by: HttpCookie
+         */
+        std::optional<std::int32_t> MaxCookieSize;
+
         /** Default HTTP parser options. */
         static const HttpParserOptions DEFAULT_OPTIONS;
 
