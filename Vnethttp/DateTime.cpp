@@ -391,13 +391,13 @@ std::optional<DateTime> DateTime::ParseDateFromUTCString(std::string_view str, c
         return std::nullopt;
     }
 
-    tm.tm_isdst = -1;
     std::time_t time = std::mktime(&tm);
     time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(hourOffset)).count();
     time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes(minuteOffset)).count();
 
     // check if the week day matches from the week day from the input string:
-    if (tm.tm_wday != std::distance(std::begin(DateTime::DAY_NAMES), it)) {
+    const std::tm* pTm = std::gmtime(&time);
+    if (pTm->tm_wday != std::distance(std::begin(DateTime::DAY_NAMES), it)) {
         if (exceptions) throw BadDatetimeFormatException("Bad datetime format.");
         return std::nullopt;
     }
