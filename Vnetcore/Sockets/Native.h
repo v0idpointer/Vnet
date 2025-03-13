@@ -36,10 +36,10 @@ namespace Vnet::Sockets {
 
         static std::int32_t GetLastErrorCode(void) noexcept;
 
-        static std::int32_t ToNativeAddressFamily(const AddressFamily af) noexcept;
-        static std::int32_t ToNativeSocketType(const SocketType type) noexcept;
-        static std::int32_t ToNativeProtocol(const Protocol proto) noexcept;
-        static std::int32_t ToNativeSocketFlags(const SocketFlags flags) noexcept;
+        static std::optional<std::int32_t> ToNativeAddressFamily(const AddressFamily af) noexcept;
+        static std::optional<std::int32_t> ToNativeSocketType(const SocketType type) noexcept;
+        static std::optional<std::int32_t> ToNativeProtocol(const Protocol proto) noexcept;
+        static std::optional<std::int32_t> ToNativeSocketFlags(const SocketFlags flags) noexcept;
 
         static IpAddress ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept;
         static IpAddress ToIpAddress6(const struct sockaddr_in6* const sockaddr) noexcept;

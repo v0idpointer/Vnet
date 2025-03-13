@@ -51,6 +51,9 @@ namespace Vnet::Sockets {
          * @param af A value from the AddressFamily enum.
          * @param type A value from the SocketType enum.
          * @param proto A value from the Protocol enum.
+         * @exception std::invalid_argument - The 'af' parameter contains an invalid
+         * address family, or the 'type' parameter contains an invalid socket type,
+         * or the 'proto' parameter contains an invalid protocol.
          * @exception SocketException
          */
         Socket(const AddressFamily af, const SocketType type, const Protocol proto);

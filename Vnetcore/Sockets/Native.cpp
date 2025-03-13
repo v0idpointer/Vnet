@@ -62,29 +62,44 @@ std::int32_t Native::GetLastErrorCode() noexcept {
 
 }
 
-std::int32_t Native::ToNativeAddressFamily(const AddressFamily af) noexcept {
+std::optional<std::int32_t> Native::ToNativeAddressFamily(const AddressFamily af) noexcept {
     if (Native::s_addressFamilies.contains(af)) return Native::s_addressFamilies.at(af);
-    else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
+    else return std::nullopt;
 }
 
-std::int32_t Native::ToNativeSocketType(const SocketType type) noexcept {
+std::optional<std::int32_t> Native::ToNativeSocketType(const SocketType type) noexcept {
     if (Native::s_socketTypes.contains(type)) return Native::s_socketTypes.at(type);
-    else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
+    else return std::nullopt;
 }
 
-std::int32_t Native::ToNativeProtocol(const Protocol proto) noexcept {
+std::optional<std::int32_t> Native::ToNativeProtocol(const Protocol proto) noexcept {
     if (Native::s_protocols.contains(proto)) return Native::s_protocols.at(proto);
-    else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
+    else return std::nullopt;
 }
 
-std::int32_t Native::ToNativeSocketFlags(const SocketFlags flags) noexcept {
-    
-    std::int32_t nf = 0;
-    for (const auto& [k, v] : Native::s_socketFlags) {
-        if (static_cast<bool>(k & flags)) nf |= v;
+std::optional<std::int32_t> Native::ToNativeSocketFlags(const SocketFlags flags) noexcept {
+
+    std::int32_t bit = 1;
+    std::int32_t nativeFlags = 0;
+    std::int32_t i = static_cast<std::int32_t>(flags);
+
+    while (i > 0) {
+
+        if (i & 1) {
+
+            const SocketFlags flag = static_cast<SocketFlags>(bit);
+            if (!Native::s_socketFlags.contains(flag)) return std::nullopt;
+
+            nativeFlags |= Native::s_socketFlags.at(flag);
+
+        }
+
+        i >>= 1;
+        bit <<= 1;
+
     }
 
-    return nf;
+    return nativeFlags;
 }
 
 IpAddress Native::ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept {

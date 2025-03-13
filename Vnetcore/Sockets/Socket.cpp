@@ -19,11 +19,20 @@ Socket::Socket(const NativeSocket_t socket, const AddressFamily af, const Socket
 Socket::Socket(const AddressFamily af, const SocketType type, const Protocol proto)
     : Socket(INVALID_SOCKET_HANDLE, af, type, proto) {
 
-    std::int32_t addressFamily = Native::ToNativeAddressFamily(af);
-    std::int32_t socketType = Native::ToNativeSocketType(type);
-    std::int32_t protocol = Native::ToNativeProtocol(proto);
+    const std::optional<std::int32_t> addressFamily = Native::ToNativeAddressFamily(af);
+    const std::optional<std::int32_t> socketType = Native::ToNativeSocketType(type);
+    const std::optional<std::int32_t> protocol = Native::ToNativeProtocol(proto);
 
-    this->m_socket = socket(addressFamily, socketType, protocol);
+    if (!addressFamily.has_value())
+        throw std::invalid_argument("'af': Invalid address family.");
+
+    if (!socketType.has_value())
+        throw std::invalid_argument("'type': Invalid socket type.");
+
+    if (!protocol.has_value())
+        throw std::invalid_argument("'proto': Invalid protocol.");
+
+    this->m_socket = socket(addressFamily.value(), socketType.value(), protocol.value());
     if (this->m_socket == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
@@ -198,6 +207,10 @@ std::int32_t Socket::Send(const std::span<const std::uint8_t> data, const std::i
     if (this->m_socket == INVALID_SOCKET_HANDLE)
         throw InvalidObjectStateException("The socket is closed.");
 
+    const std::optional<std::int32_t> nativeFlags = Native::ToNativeSocketFlags(flags);
+    if (!nativeFlags.has_value())
+        throw std::invalid_argument("'flags': Invalid socket flag(s).");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -205,7 +218,7 @@ std::int32_t Socket::Send(const std::span<const std::uint8_t> data, const std::i
 
     const char* const buffer = reinterpret_cast<const char*>(data.data() + offset);
 
-    std::int32_t sent = send(this->m_socket, buffer, size, Native::ToNativeSocketFlags(flags));
+    std::int32_t sent = send(this->m_socket, buffer, size, nativeFlags.value());
     if (sent == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
@@ -229,6 +242,10 @@ std::int32_t Socket::Receive(const std::span<std::uint8_t> data, const std::int3
     if (this->m_socket == INVALID_SOCKET_HANDLE)
         throw InvalidObjectStateException("The socket is closed.");
 
+    const std::optional<std::int32_t> nativeFlags = Native::ToNativeSocketFlags(flags);
+    if (!nativeFlags.has_value())
+        throw std::invalid_argument("'flags': Invalid socket flag(s).");
+
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -236,7 +253,7 @@ std::int32_t Socket::Receive(const std::span<std::uint8_t> data, const std::int3
 
     char* const buffer = reinterpret_cast<char*>(data.data() + offset);
 
-    std::int32_t read = recv(this->m_socket, buffer, size, Native::ToNativeSocketFlags(flags));
+    std::int32_t read = recv(this->m_socket, buffer, size, nativeFlags.value());
     if (read == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
@@ -260,6 +277,10 @@ std::int32_t Socket::SendTo(const std::span<const std::uint8_t> data, const std:
     if (this->m_socket == INVALID_SOCKET_HANDLE)
         throw InvalidObjectStateException("The socket is closed.");
 
+    const std::optional<std::int32_t> nativeFlags = Native::ToNativeSocketFlags(flags);
+    if (!nativeFlags.has_value())
+        throw std::invalid_argument("'flags': Invalid socket flag(s).");
+    
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -273,7 +294,7 @@ std::int32_t Socket::SendTo(const std::span<const std::uint8_t> data, const std:
         throw std::invalid_argument("'sockaddr': "s + ex.what());
     }
 
-    std::int32_t sent = sendto(this->m_socket, buffer, size, Native::ToNativeSocketFlags(flags), result->ai_addr, static_cast<std::int32_t>(result->ai_addrlen));
+    std::int32_t sent = sendto(this->m_socket, buffer, size, nativeFlags.value(), result->ai_addr, static_cast<std::int32_t>(result->ai_addrlen));
     if (sent == INVALID_SOCKET_HANDLE) {
         freeaddrinfo(result);
         throw SocketException(Native::GetLastErrorCode());
@@ -301,6 +322,10 @@ std::int32_t Socket::ReceiveFrom(const std::span<std::uint8_t> data, const std::
     if (this->m_socket == INVALID_SOCKET_HANDLE)
         throw InvalidObjectStateException("The socket is closed.");
 
+    const std::optional<std::int32_t> nativeFlags = Native::ToNativeSocketFlags(flags);
+    if (!nativeFlags.has_value())
+        throw std::invalid_argument("'flags': Invalid socket flag(s).");
+        
     if (offset < 0) throw std::out_of_range("'offset' is less than zero.");
     if (offset > data.size()) throw std::out_of_range("'offset' is greater than the buffer size.");
     if (size < 0) throw std::out_of_range("'size' is less than zero.");
@@ -310,7 +335,7 @@ std::int32_t Socket::ReceiveFrom(const std::span<std::uint8_t> data, const std::
     socklen_t senderLen = sizeof(sender);
     char* const buffer = reinterpret_cast<char*>(data.data() + offset);
 
-    std::int32_t read = recvfrom(this->m_socket, buffer, size, Native::ToNativeSocketFlags(flags), &sender, &senderLen);
+    std::int32_t read = recvfrom(this->m_socket, buffer, size, nativeFlags.value(), &sender, &senderLen);
     if (read == INVALID_SOCKET_HANDLE)
         throw SocketException(Native::GetLastErrorCode());
 
