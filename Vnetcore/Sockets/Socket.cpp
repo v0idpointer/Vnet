@@ -520,3 +520,74 @@ void Socket::SetBlocking(const bool blocking) {
 #endif
 
 }
+
+void Socket::GetSocketOption(const SocketOptionLevel level, const SocketOption option, const std::span<std::uint8_t> value) const {
+
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
+    const std::optional<std::int32_t> nativeLevel = Native::ToNativeSocketOptionLevel(level);
+    if (!nativeLevel.has_value())
+        throw std::invalid_argument("'level': Invalid socket option level.");
+
+    const std::optional<std::int32_t> nativeOption = Native::ToNativeSocketOption(level, option);
+    if (!nativeOption.has_value())
+        throw std::invalid_argument("'option': The specified socket option is invalid, or is incompatible with the specified socket option level.");
+
+    std::int32_t valLen = static_cast<std::int32_t>(value.size());
+    if (getsockopt(this->m_socket, nativeLevel.value(), nativeOption.value(), reinterpret_cast<char*>(value.data()), &valLen) == INVALID_SOCKET_HANDLE)
+        throw SocketException(Native::GetLastErrorCode());
+
+}
+
+void Socket::GetSocketOption(const SocketOptionLevel level, const SocketOption option, std::int32_t& value) const {
+
+    std::span<std::uint8_t> val = {
+        reinterpret_cast<std::uint8_t*>(&value),
+        sizeof(std::int32_t)
+    };
+
+    this->GetSocketOption(level, option, val);
+
+}
+
+void Socket::GetSocketOption(const SocketOptionLevel level, const SocketOption option, bool& value) const {
+    
+    std::int32_t val = 0;
+    this->GetSocketOption(level, option, val);
+    value = ((val != 0) ? true : false);
+
+}
+
+void Socket::SetSocketOption(const SocketOptionLevel level, const SocketOption option, const std::span<const std::uint8_t> value) {
+    
+    if (this->m_socket == INVALID_SOCKET_HANDLE)
+        throw InvalidObjectStateException("The socket is closed.");
+
+    const std::optional<std::int32_t> nativeLevel = Native::ToNativeSocketOptionLevel(level);
+    if (!nativeLevel.has_value())
+        throw std::invalid_argument("'level': Invalid socket option level.");
+
+    const std::optional<std::int32_t> nativeOption = Native::ToNativeSocketOption(level, option);
+    if (!nativeOption.has_value())
+        throw std::invalid_argument("'option': The specified socket option is invalid, or is incompatible with the specified socket option level.");
+
+    if (setsockopt(this->m_socket, nativeLevel.value(), nativeOption.value(), reinterpret_cast<const char*>(value.data()), value.size()) == INVALID_SOCKET_HANDLE)
+        throw SocketException(Native::GetLastErrorCode());
+
+}
+
+void Socket::SetSocketOption(const SocketOptionLevel level, const SocketOption option, const std::int32_t value) {
+
+    std::span<const std::uint8_t> val = {
+        reinterpret_cast<const std::uint8_t*>(&value),
+        sizeof(std::int32_t)
+    };
+
+    this->SetSocketOption(level, option, val);
+
+}
+
+void Socket::SetSocketOption(const SocketOptionLevel level, const SocketOption option, const bool value) {
+    this->SetSocketOption(level, option, (value ? 1 : 0));
+}

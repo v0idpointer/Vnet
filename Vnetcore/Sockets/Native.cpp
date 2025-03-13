@@ -52,6 +52,30 @@ std::unordered_map<SocketFlags, std::int32_t> Native::s_socketFlags = {
 
 };
 
+std::unordered_map<SocketOptionLevel, std::int32_t> Native::s_optionLevels = {
+
+    { SocketOptionLevel::SOCKET, SOL_SOCKET },
+
+};
+
+std::unordered_map<SocketOption, std::pair<std::int32_t, SocketOptionLevel>> Native::s_options = { 
+
+    { SocketOption::DEBUG, { SO_DEBUG, SocketOptionLevel::SOCKET } },
+    { SocketOption::BROADCAST, { SO_BROADCAST, SocketOptionLevel::SOCKET } },
+    { SocketOption::REUSE_ADDRESS, { SO_REUSEADDR, SocketOptionLevel::SOCKET } },
+    { SocketOption::KEEP_ALIVE, { SO_KEEPALIVE, SocketOptionLevel::SOCKET } },
+    { SocketOption::LINGER, { SO_LINGER, SocketOptionLevel::SOCKET } },
+    { SocketOption::OUT_OF_BAND_INLINE, { SO_OOBINLINE, SocketOptionLevel::SOCKET } },
+    { SocketOption::SEND_BUFFER_SIZE, { SO_SNDBUF, SocketOptionLevel::SOCKET } },
+    { SocketOption::RECEIVE_BUFFER_SIZE, { SO_RCVBUF, SocketOptionLevel::SOCKET } },
+    { SocketOption::DONT_ROUTE, { SO_DONTROUTE, SocketOptionLevel::SOCKET } },
+    { SocketOption::RECEIVE_LOW_WATERMARK, { SO_RCVLOWAT, SocketOptionLevel::SOCKET } },
+    { SocketOption::RECEIVE_TIMEOUT, { SO_RCVTIMEO, SocketOptionLevel::SOCKET } },
+    { SocketOption::SEND_LOW_WATERMARK, { SO_SNDLOWAT, SocketOptionLevel::SOCKET } },
+    { SocketOption::SEND_TIMEOUT, { SO_SNDTIMEO, SocketOptionLevel::SOCKET } },
+
+};
+
 std::int32_t Native::GetLastErrorCode() noexcept {
 
 #ifdef VNET_PLATFORM_WINDOWS
@@ -100,6 +124,20 @@ std::optional<std::int32_t> Native::ToNativeSocketFlags(const SocketFlags flags)
     }
 
     return nativeFlags;
+}
+
+std::optional<std::int32_t> Native::ToNativeSocketOptionLevel(const SocketOptionLevel level) noexcept {
+    if (Native::s_optionLevels.contains(level)) return Native::s_optionLevels.at(level);
+    else return std::nullopt;
+}
+
+std::optional<std::int32_t> Native::ToNativeSocketOption(const SocketOptionLevel level, const SocketOption option) noexcept {
+
+    if (!Native::s_options.contains(option)) return std::nullopt;
+    const auto& [opt, lvl] = Native::s_options.at(option);
+
+    if (lvl == level) return opt;
+    else return std::nullopt;
 }
 
 IpAddress Native::ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept {
