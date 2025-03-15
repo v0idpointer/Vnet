@@ -129,7 +129,7 @@ namespace Vnet::Cryptography::Certificates {
          * @exception std::runtime_error - The X.509 certificate's public key is of an unknown type.
          * @exception SecurityException
          */
-        std::unique_ptr<CryptoKey> GetPublicKey(void) const;
+        std::unique_ptr<const CryptoKey> GetPublicKey(void) const;
 
         /**
          * Exports the X.509 certificate in PEM format.

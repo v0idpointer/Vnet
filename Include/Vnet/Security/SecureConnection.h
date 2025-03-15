@@ -68,7 +68,7 @@ namespace Vnet::Security {
          * @exception SecurityException - Failed to retrieve an X.509 certificate.
          * @exception InvalidObjectStateException - The secure connection is closed.
          */
-        std::optional<Cryptography::Certificates::Certificate> GetCertificate(void) const;
+        std::optional<const Cryptography::Certificates::Certificate> GetCertificate(void) const;
 
         /**
          * Returns the peer's X.509 certificate.
@@ -77,7 +77,7 @@ namespace Vnet::Security {
          * @exception SecurityException - Failed to retrieve an X.509 certificate.
          * @exception InvalidObjectStateException - The secure connection is closed.
          */
-        std::optional<Cryptography::Certificates::Certificate> GetPeerCertificate(void) const;
+        std::optional<const Cryptography::Certificates::Certificate> GetPeerCertificate(void) const;
 
         /**
          * Returns the number of bytes ready to be read.

@@ -355,11 +355,11 @@ static Certificate Win32CertToCertificate(PCCERT_CONTEXT pCertContext) {
 
 #endif
 
-std::vector<std::shared_ptr<Certificate>> CertificateStore::GetCertificates() const {
+std::vector<std::shared_ptr<const Certificate>> CertificateStore::GetCertificates() const {
 
 #ifdef VNET_PLATFORM_WINDOWS
 
-    std::vector<std::shared_ptr<Certificate>> certs = { };
+    std::vector<std::shared_ptr<const Certificate>> certs = { };
     PCCERT_CONTEXT pCertContext = nullptr;
     while ((pCertContext = CertEnumCertificatesInStore(this->m_certStore, pCertContext)))
         certs.push_back(std::make_shared<Certificate>(Win32CertToCertificate(pCertContext)));

@@ -48,7 +48,7 @@ namespace Vnet::Cryptography::Certificates {
          * @exception SecurityException
          * @exception SystemNotSupportedException
          */
-        std::vector<std::shared_ptr<Certificate>> GetCertificates(void) const;
+        std::vector<std::shared_ptr<const Certificate>> GetCertificates(void) const;
 
         /**
          * Adds an X.509 certificate to the certificate store.
