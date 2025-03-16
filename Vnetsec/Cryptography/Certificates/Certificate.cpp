@@ -177,7 +177,7 @@ const std::optional<std::reference_wrapper<const CryptoKey>> Certificate::GetPri
     else return std::nullopt;
 }
 
-std::unique_ptr<const CryptoKey> Certificate::GetPublicKey() const {
+std::unique_ptr<CryptoKey> Certificate::GetPublicKey() const {
 
     EVP_PKEY* publicKey = X509_get_pubkey(this->m_cert);
     if (publicKey == nullptr) throw SecurityException(ERR_get_error());

@@ -86,7 +86,7 @@ SecurityProtocol SecureConnection::GetSecurityProtocol() const {
 
 }
 
-std::optional<const Certificate> SecureConnection::GetCertificate() const {
+std::optional<Certificate> SecureConnection::GetCertificate() const {
 
     if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
         throw InvalidObjectStateException("The secure connection is closed.");
@@ -114,7 +114,7 @@ std::optional<const Certificate> SecureConnection::GetCertificate() const {
     return Certificate::LoadCertificateFromPEM(pem, std::nullopt);
 }
 
-std::optional<const Certificate> SecureConnection::GetPeerCertificate() const {
+std::optional<Certificate> SecureConnection::GetPeerCertificate() const {
     
     if (this->m_ssl == INVALID_SECURE_CONNECTION_HANDLE)
         throw InvalidObjectStateException("The secure connection is closed.");
