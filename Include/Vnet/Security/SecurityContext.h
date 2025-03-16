@@ -48,6 +48,8 @@ namespace Vnet::Security {
          * @param appType ApplicationType::CLIENT or ApplicationType::SERVER.
          * @param protocol One or more values, bitwise OR-ed together, from the SecurityProtocol enum.
          * If SecurityProtocol::UNSPECIFIED is provided, the default protocols will be selected.
+         * @exception std::invalid_argument - The 'appType' parameter contains an invalid
+         * application type, or 'protocol' contains an invalid and/or unsupported security protocol.
          * @exception SecurityException
          */
         SecurityContext(const ApplicationType appType, const SecurityProtocol protocol);

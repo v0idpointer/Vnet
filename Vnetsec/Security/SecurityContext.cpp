@@ -19,6 +19,12 @@ using namespace Vnet::Cryptography::Certificates;
 
 SecurityContext::SecurityContext(const ApplicationType appType, const SecurityProtocol protocol) : m_ctx(INVALID_SECURITY_CONTEXT_HANDLE) {
 
+    if ((appType != ApplicationType::CLIENT) && (appType != ApplicationType::SERVER))
+        throw std::invalid_argument("'appType': Invalid application type.");
+
+    if (static_cast<std::uint32_t>(protocol) >= 64)
+        throw std::invalid_argument("'protocol': Invalid and/or unsupported security protocol.");
+
     this->m_applicationType = appType;
     this->m_securityProtocol = protocol;
 
