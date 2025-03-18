@@ -9,9 +9,12 @@
 #include <Vnet/Security/ApplicationType.h>
 #include <Vnet/Security/SecurityProtocol.h>
 
+#include <string>
+#include <string_view>
 #include <memory>
 #include <optional>
 #include <functional>
+#include <unordered_map>
 
 struct ssl_ctx_st;
 
@@ -39,6 +42,15 @@ namespace Vnet::Security {
         SecurityProtocol m_securityProtocol;
         std::unique_ptr<Vnet::Cryptography::Certificates::Certificate> m_cert;
         std::unique_ptr<Vnet::Cryptography::CryptoKey> m_privateKey;
+        
+        bool m_sniEnabled;
+        std::unordered_map<
+            std::string, 
+            std::pair<
+                std::shared_ptr<const Vnet::Cryptography::Certificates::Certificate>, 
+                std::shared_ptr<const Vnet::Cryptography::CryptoKey>
+            >
+        > m_sni;
 
     public:
 
@@ -102,6 +114,11 @@ namespace Vnet::Security {
         const std::optional<std::reference_wrapper<const Cryptography::CryptoKey>> GetPrivateKey(void) const;
 
         /**
+         * 
+         */
+        bool IsServerNameIndicationEnabled(void) const;
+
+        /**
          * Sets an X.509 certificate to be used with the security context.
          * 
          * If the provided X.509 certificate has its corresponding private key,
@@ -116,6 +133,11 @@ namespace Vnet::Security {
         void SetCertificate(const std::optional<std::reference_wrapper<const Cryptography::Certificates::Certificate>> cert);
 
         /**
+         * SetCertificate for SNI
+         */
+        void SetCertificate(const std::string_view serverName, const std::optional<std::reference_wrapper<const Cryptography::Certificates::Certificate>> cert);
+
+        /**
          * Sets a private key to be used with the security context.
          * 
          * @param privateKey A private key.
@@ -125,6 +147,19 @@ namespace Vnet::Security {
          * @exception SecurityException
          */
         void SetPrivateKey(const std::optional<std::reference_wrapper<const Cryptography::CryptoKey>> privateKey);
+
+        /**
+         * SetPrivateKey for SNI
+         */
+        void SetPrivateKey(const std::string_view serverName, const std::optional<std::reference_wrapper<const Cryptography::CryptoKey>> privateKey);
+
+        /**
+         * Enables or disables Server Name Indication (SNI), a TLS extension.
+         * 
+         * @param enabled true to enable SNI; false to disable SNI.
+         * @exception InvalidObjectStateException - The current SecurityContext object is not a server security context.
+         */
+        void SetServerNameIndicationEnabled(const bool enabled);
 
     };
 
