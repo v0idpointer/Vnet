@@ -111,8 +111,42 @@ const std::optional<std::reference_wrapper<const Certificate>> SecurityContext::
     else return std::nullopt;
 }
 
+const std::optional<std::reference_wrapper<const Certificate>> SecurityContext::GetCertificate(const std::string_view serverName) const {
+    
+    if (this->m_applicationType != ApplicationType::SERVER)
+        throw InvalidObjectStateException("The current SecurityContext object is not a server security context.");
+
+    if (serverName.empty())
+        throw std::invalid_argument("'serverName': Empty string.");
+
+    std::string name = ToLowercase(serverName);
+    if (!this->m_sni.contains(name)) return std::nullopt;
+
+    const auto& [certificate, _] = this->m_sni.at(name);
+
+    if (certificate) return std::cref(*certificate);
+    else return std::nullopt;
+}
+
 const std::optional<std::reference_wrapper<const CryptoKey>> SecurityContext::GetPrivateKey() const {
     if (this->m_privateKey) return std::cref(*this->m_privateKey);
+    else return std::nullopt;
+}
+
+const std::optional<std::reference_wrapper<const CryptoKey>> SecurityContext::GetPrivateKey(const std::string_view serverName) const {
+
+    if (this->m_applicationType != ApplicationType::SERVER)
+        throw InvalidObjectStateException("The current SecurityContext object is not a server security context.");
+
+    if (serverName.empty())
+        throw std::invalid_argument("'serverName': Empty string.");
+
+    std::string name = ToLowercase(serverName);
+    if (!this->m_sni.contains(name)) return std::nullopt;
+
+    const auto& [_, privateKey] = this->m_sni.at(name);
+
+    if (privateKey) return std::cref(*privateKey);
     else return std::nullopt;
 }
 
