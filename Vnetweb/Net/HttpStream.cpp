@@ -21,16 +21,16 @@ using namespace Vnet::Net;
 using namespace Vnet;
 
 HttpStream::HttpStream(const NetworkStream& stream)
-    : HttpStream(stream.GetSocket(), stream.GetSecureConnection()) { 
-    
+    : HttpStream(stream.GetSocket(), stream.GetSecureConnection()) { }
+
+HttpStream::HttpStream(std::shared_ptr<Socket> socket, std::shared_ptr<SecureConnection> ssl)
+    : NetworkStream(std::move(socket), std::move(ssl)) {
+
     this->m_networkOptions = NetworkOptions::DEFAULT_OPTIONS;
     this->m_httpOptions = HttpParserOptions::DEFAULT_OPTIONS;
     this->m_transferEncoding = TransferEncoding::NONE;
 
 }
-
-HttpStream::HttpStream(std::shared_ptr<Socket> socket, std::shared_ptr<SecureConnection> ssl)
-    : NetworkStream(socket, ssl) { }
 
 HttpStream::HttpStream(const HttpStream& stream) : NetworkStream(stream) { }
 

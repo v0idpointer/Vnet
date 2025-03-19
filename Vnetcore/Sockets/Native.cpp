@@ -52,6 +52,30 @@ std::unordered_map<SocketFlags, std::int32_t> Native::s_socketFlags = {
 
 };
 
+std::unordered_map<SocketOptionLevel, std::int32_t> Native::s_optionLevels = {
+
+    { SocketOptionLevel::SOCKET, SOL_SOCKET },
+
+};
+
+std::unordered_map<SocketOption, std::pair<std::int32_t, SocketOptionLevel>> Native::s_options = { 
+
+    { SocketOption::DEBUG, { SO_DEBUG, SocketOptionLevel::SOCKET } },
+    { SocketOption::BROADCAST, { SO_BROADCAST, SocketOptionLevel::SOCKET } },
+    { SocketOption::REUSE_ADDRESS, { SO_REUSEADDR, SocketOptionLevel::SOCKET } },
+    { SocketOption::KEEP_ALIVE, { SO_KEEPALIVE, SocketOptionLevel::SOCKET } },
+    { SocketOption::LINGER, { SO_LINGER, SocketOptionLevel::SOCKET } },
+    { SocketOption::OUT_OF_BAND_INLINE, { SO_OOBINLINE, SocketOptionLevel::SOCKET } },
+    { SocketOption::SEND_BUFFER_SIZE, { SO_SNDBUF, SocketOptionLevel::SOCKET } },
+    { SocketOption::RECEIVE_BUFFER_SIZE, { SO_RCVBUF, SocketOptionLevel::SOCKET } },
+    { SocketOption::DONT_ROUTE, { SO_DONTROUTE, SocketOptionLevel::SOCKET } },
+    { SocketOption::RECEIVE_LOW_WATERMARK, { SO_RCVLOWAT, SocketOptionLevel::SOCKET } },
+    { SocketOption::RECEIVE_TIMEOUT, { SO_RCVTIMEO, SocketOptionLevel::SOCKET } },
+    { SocketOption::SEND_LOW_WATERMARK, { SO_SNDLOWAT, SocketOptionLevel::SOCKET } },
+    { SocketOption::SEND_TIMEOUT, { SO_SNDTIMEO, SocketOptionLevel::SOCKET } },
+
+};
+
 std::int32_t Native::GetLastErrorCode() noexcept {
 
 #ifdef VNET_PLATFORM_WINDOWS
@@ -62,29 +86,58 @@ std::int32_t Native::GetLastErrorCode() noexcept {
 
 }
 
-std::int32_t Native::ToNativeAddressFamily(const AddressFamily af) noexcept {
+std::optional<std::int32_t> Native::ToNativeAddressFamily(const AddressFamily af) noexcept {
     if (Native::s_addressFamilies.contains(af)) return Native::s_addressFamilies.at(af);
-    else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
+    else return std::nullopt;
 }
 
-std::int32_t Native::ToNativeSocketType(const SocketType type) noexcept {
+std::optional<std::int32_t> Native::ToNativeSocketType(const SocketType type) noexcept {
     if (Native::s_socketTypes.contains(type)) return Native::s_socketTypes.at(type);
-    else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
+    else return std::nullopt;
 }
 
-std::int32_t Native::ToNativeProtocol(const Protocol proto) noexcept {
+std::optional<std::int32_t> Native::ToNativeProtocol(const Protocol proto) noexcept {
     if (Native::s_protocols.contains(proto)) return Native::s_protocols.at(proto);
-    else return static_cast<std::int32_t>(INVALID_SOCKET_HANDLE);
+    else return std::nullopt;
 }
 
-std::int32_t Native::ToNativeSocketFlags(const SocketFlags flags) noexcept {
-    
-    std::int32_t nf = 0;
-    for (const auto& [k, v] : Native::s_socketFlags) {
-        if (static_cast<bool>(k & flags)) nf |= v;
+std::optional<std::int32_t> Native::ToNativeSocketFlags(const SocketFlags flags) noexcept {
+
+    std::int32_t bit = 1;
+    std::int32_t nativeFlags = 0;
+    std::int32_t i = static_cast<std::int32_t>(flags);
+
+    while (i > 0) {
+
+        if (i & 1) {
+
+            const SocketFlags flag = static_cast<SocketFlags>(bit);
+            if (!Native::s_socketFlags.contains(flag)) return std::nullopt;
+
+            nativeFlags |= Native::s_socketFlags.at(flag);
+
+        }
+
+        i >>= 1;
+        bit <<= 1;
+
     }
 
-    return nf;
+    return nativeFlags;
+}
+
+std::optional<std::int32_t> Native::ToNativeSocketOptionLevel(const SocketOptionLevel level) noexcept {
+    if (Native::s_optionLevels.contains(level)) return Native::s_optionLevels.at(level);
+    else return std::nullopt;
+}
+
+std::optional<std::int32_t> Native::ToNativeSocketOption(const SocketOptionLevel level, const SocketOption option) noexcept {
+
+    if (!Native::s_options.contains(option)) return std::nullopt;
+    const auto& [opt, lvl] = Native::s_options.at(option);
+
+    if (lvl == level) return opt;
+    else return std::nullopt;
 }
 
 IpAddress Native::ToIpAddress4(const struct sockaddr_in* const sockaddr) noexcept {

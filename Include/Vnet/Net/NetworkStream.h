@@ -25,9 +25,9 @@ namespace Vnet::Net {
         /**
          * Constructs a new NetworkStream object.
          * 
-         * @param socket A socket.
+         * @param socket A stream socket.
          * @param ssl A secure connection.
-         * @exception std::invalid_argument - The 'socket' parameter is nullptr.
+         * @exception std::invalid_argument - The 'socket' parameter is nullptr, or 'socket' is not a stream socket.
          */
         NetworkStream(std::shared_ptr<Vnet::Sockets::Socket> socket, std::shared_ptr<Vnet::Security::SecureConnection> ssl);
 

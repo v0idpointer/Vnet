@@ -14,6 +14,8 @@
 #include <Vnet/Sockets/ISocketAddress.h>
 #include <Vnet/Sockets/SocketFlags.h>
 #include <Vnet/Sockets/PollEvent.h>
+#include <Vnet/Sockets/SocketOption.h>
+#include <Vnet/Sockets/SocketOptionLevel.h>
 
 #include <cstdint>
 #include <span>
@@ -51,6 +53,9 @@ namespace Vnet::Sockets {
          * @param af A value from the AddressFamily enum.
          * @param type A value from the SocketType enum.
          * @param proto A value from the Protocol enum.
+         * @exception std::invalid_argument - The 'af' parameter contains an invalid
+         * address family, or the 'type' parameter contains an invalid socket type,
+         * or the 'proto' parameter contains an invalid protocol.
          * @exception SocketException
          */
         Socket(const AddressFamily af, const SocketType type, const Protocol proto);
@@ -456,6 +461,90 @@ namespace Vnet::Sockets {
          * @exception InvalidObjectStateException
          */
         void SetBlocking(const bool blocking);
+
+        /**
+         * Retrieves a socket option.
+         * 
+         * @param level A value from the SocketOptionLevel enum.
+         * @param option A value from the SocketOption enum.
+         * @param value A buffer that will receive the option value.
+         * @exception std::invalid_argument - The 'level' parameter contains an invalid
+         * socket option level, or the 'option' parameter contains an invalid socket
+         * option, or 'option' is incompatible with the specified socket option level.
+         * @exception SocketException
+         * @exception InvalidObjectStateException
+         */
+        void GetSocketOption(const SocketOptionLevel level, const SocketOption option, const std::span<std::uint8_t> value) const;
+
+        /**
+         * Retrieves a socket option.
+         * 
+         * @param level A value from the SocketOptionLevel enum.
+         * @param option A value from the SocketOption enum.
+         * @param value An integer that will receive the option value.
+         * @exception std::invalid_argument - The 'level' parameter contains an invalid
+         * socket option level, or the 'option' parameter contains an invalid socket
+         * option, or 'option' is incompatible with the specified socket option level.
+         * @exception SocketException
+         * @exception InvalidObjectStateException
+         */
+        void GetSocketOption(const SocketOptionLevel level, const SocketOption option, std::int32_t& value) const;
+
+        /**
+         * Retrieves a socket option.
+         * 
+         * @param level A value from the SocketOptionLevel enum.
+         * @param option A value from the SocketOption enum.
+         * @param value A boolean that will receive the option value.
+         * @exception std::invalid_argument - The 'level' parameter contains an invalid
+         * socket option level, or the 'option' parameter contains an invalid socket
+         * option, or 'option' is incompatible with the specified socket option level.
+         * @exception SocketException
+         * @exception InvalidObjectStateException
+         */
+        void GetSocketOption(const SocketOptionLevel level, const SocketOption option, bool& value) const;
+
+        /**
+         * Sets a socket option.
+         * 
+         * @param level A value from the SocketOptionLevel enum.
+         * @param option A value from the SocketOption enum.
+         * @param value A buffer containing the option value.
+         * @exception std::invalid_argument - The 'level' parameter contains an invalid
+         * socket option level, or the 'option' parameter contains an invalid socket
+         * option, or 'option' is incompatible with the specified socket option level.
+         * @exception SocketException
+         * @exception InvalidObjectStateException
+         */
+        void SetSocketOption(const SocketOptionLevel level, const SocketOption option, const std::span<const std::uint8_t> value);
+
+        /**
+         * Sets a socket option.
+         * 
+         * @param level A value from the SocketOptionLevel enum.
+         * @param option A value from the SocketOption enum.
+         * @param value The option value, represented as an integer.
+         * @exception std::invalid_argument - The 'level' parameter contains an invalid
+         * socket option level, or the 'option' parameter contains an invalid socket
+         * option, or 'option' is incompatible with the specified socket option level.
+         * @exception SocketException
+         * @exception InvalidObjectStateException
+         */
+        void SetSocketOption(const SocketOptionLevel level, const SocketOption option, const std::int32_t value);
+
+        /**
+         * Sets a socket option.
+         * 
+         * @param level A value from the SocketOptionLevel enum.
+         * @param option A value from the SocketOption enum.
+         * @param value The option value, represented as a boolean.
+         * @exception std::invalid_argument - The 'level' parameter contains an invalid
+         * socket option level, or the 'option' parameter contains an invalid socket
+         * option, or 'option' is incompatible with the specified socket option level.
+         * @exception SocketException
+         * @exception InvalidObjectStateException
+         */
+        void SetSocketOption(const SocketOptionLevel level, const SocketOption option, const bool value);
 
     };
 

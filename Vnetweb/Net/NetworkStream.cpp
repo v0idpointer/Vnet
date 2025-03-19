@@ -19,6 +19,9 @@ NetworkStream::NetworkStream(std::shared_ptr<Socket> socket, std::shared_ptr<Sec
     if (socket == nullptr)
         throw std::invalid_argument("'socket': nullptr");
 
+    if (socket->GetSocketType() != SocketType::STREAM)
+        throw std::invalid_argument("'socket': The specified socket is not a stream socket.");
+
     this->m_socket = std::move(socket);
     this->m_ssl = std::move(ssl);
 

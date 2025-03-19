@@ -211,7 +211,7 @@ namespace Vnet::Security {
         void Close(void);
 
     private:
-        static NativeSecureConnection_t CreateConnection(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
+        static NativeSecureConnection_t CreateConnection(const SecurityContext& ctx, const Sockets::Socket& socket);
 
     public:
 
@@ -224,24 +224,10 @@ namespace Vnet::Security {
          * @param socket A socket.
          * @returns A new secure connection.
          * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket.
+         * or the 'socket' parameter contains an invalid socket, or 'socket' is not a stream socket.
          * @exception SecurityException
          */
         static SecureConnection Connect(const SecurityContext& ctx, const Sockets::Socket& socket);
-        
-        /**
-         * Initiates a new secure connection.
-         * 
-         * This function is used by client-side applications.
-         * 
-         * @param ctx A client security context.
-         * @param socket A socket handle.
-         * @returns A new secure connection.
-         * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket handle.
-         * @exception SecurityException
-         */
-        static SecureConnection Connect(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
 
         /**
          * Initiates a new secure connection.
@@ -253,7 +239,8 @@ namespace Vnet::Security {
          * @param socket A socket.
          * @returns A new secure connection.
          * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket, or the 'hostname' parameter is an empty string.
+         * or the 'socket' parameter contains an invalid socket, or 'socket' is not a stream socket,
+         * or the 'hostname' parameter is an empty string.
          * @exception SecurityException
          */
         static SecureConnection Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const Sockets::Socket& socket);
@@ -263,28 +250,13 @@ namespace Vnet::Security {
          * 
          * This function is used by client-side applications.
          * 
-         * @param hostname An optional string containing a hostname for the Server Name Indication (SNI), a TLS extension.
-         * @param ctx A client security context.
-         * @param socket A socket handle.
-         * @returns A new secure connection.
-         * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket handle, or the 'hostname' parameter is an empty string.
-         * @exception SecurityException
-         */
-        static SecureConnection Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
-
-        /**
-         * Initiates a new secure connection.
-         * 
-         * This function is used by client-side applications.
-         * 
          * @param ctx A client security context.
          * @param socket A socket.
          * @param flags One or more values, bitwise OR-ed together, from the ConnectFlags enum.
          * @returns A new secure connection.
          * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket, or the 'flags' parameter contains
-         * an invalid value.
+         * or the 'socket' parameter contains an invalid socket, or 'socket' is not a stream socket,
+         * or the 'flags' parameter contains an invalid value.
          * @exception SecurityException
          */
         static SecureConnection Connect(const SecurityContext& ctx, const Sockets::Socket& socket, const ConnectFlags flags);
@@ -294,50 +266,17 @@ namespace Vnet::Security {
          * 
          * This function is used by client-side applications.
          * 
-         * @param ctx A client security context.
-         * @param socket A socket handle.
-         * @param flags One or more values, bitwise OR-ed together, from the ConnectFlags enum.
-         * @returns A new secure connection.
-         * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket handle, or the 'flags' parameter contains
-         * an invalid value.
-         * @exception SecurityException
-         */
-        static SecureConnection Connect(const SecurityContext& ctx, const Sockets::NativeSocket_t socket, const ConnectFlags flags);
-
-        /**
-         * Initiates a new secure connection.
-         * 
-         * This function is used by client-side applications.
-         * 
          * @param hostname An optional string containing a hostname for the Server Name Indication (SNI), a TLS extension.
          * @param ctx A client security context.
          * @param socket A socket.
          * @param flags One or more values, bitwise OR-ed together, from the ConnectFlags enum.
          * @returns A new secure connection.
          * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket, or the 'flags' parameter contains
-         * an invalid value, or the 'hostname' parameter is an empty string.
+         * or the 'socket' parameter contains an invalid socket, or 'socket' is not a stream socket,
+         * or the 'flags' parameter contains an invalid value, or the 'hostname' parameter is an empty string.
          * @exception SecurityException
          */
         static SecureConnection Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const Sockets::Socket& socket, const ConnectFlags flags);
-
-        /**
-         * Initiates a new secure connection.
-         * 
-         * This function is used by client-side applications.
-         * 
-         * @param hostname An optional string containing a hostname for the Server Name Indication (SNI), a TLS extension.
-         * @param ctx A client security context.
-         * @param socket A socket handle.
-         * @param flags One or more values, bitwise OR-ed together, from the ConnectFlags enum.
-         * @returns A new secure connection.
-         * @exception std::invalid_argument - The 'ctx' parameter is not a client security context,
-         * or the 'socket' parameter contains an invalid socket handle, or the 'flags' parameter contains
-         * an invalid value, or the 'hostname' parameter is an empty string.
-         * @exception SecurityException
-         */
-        static SecureConnection Connect(const std::optional<std::string_view> hostname, const SecurityContext& ctx, const Sockets::NativeSocket_t socket, const ConnectFlags flags);
 
         /**
          * Accepts a new secure connection.
@@ -348,7 +287,7 @@ namespace Vnet::Security {
          * @param socket A socket.
          * @returns A new secure connection.
          * @exception std::invalid_argument - The 'ctx' parameter is not a server security context,
-         * or the 'socket' parameter contains an invalid socket.
+         * or the 'socket' parameter contains an invalid socket, or 'socket' is not a stream socket.
          * @exception SecurityException
          */
         static SecureConnection Accept(const SecurityContext& ctx, const Sockets::Socket& socket);
@@ -359,45 +298,15 @@ namespace Vnet::Security {
          * This function is used by server-side applications.
          * 
          * @param ctx A server security context.
-         * @param socket A socket handle.
-         * @returns A new secure connection.
-         * @exception std::invalid_argument - The 'ctx' parameter is not a server security context,
-         * or the 'socket' parameter contains an invalid socket handle.
-         * @exception SecurityException
-         */
-        static SecureConnection Accept(const SecurityContext& ctx, const Sockets::NativeSocket_t socket);
-
-        /**
-         * Accepts a new secure connection.
-         * 
-         * This function is used by server-side applications.
-         * 
-         * @param ctx A server security context.
          * @param socket A socket.
          * @param flags One or more values, bitwise OR-ed together, from the AcceptFlags enum.
          * @returns A new secure connection.
          * @exception std::invalid_argument - The 'ctx' parameter is not a server security context,
-         * or the 'socket' parameter contains an invalid socket, or the 'flags' parameter contains
-         * an invalid value.
+         * or the 'socket' parameter contains an invalid socket, or 'socket' is not a stream socket,
+         * or the 'flags' parameter contains an invalid value.
          * @exception SecurityException
          */
         static SecureConnection Accept(const SecurityContext& ctx, const Sockets::Socket& socket, const AcceptFlags flags);
-
-        /**
-         * Accepts a new secure connection.
-         * 
-         * This function is used by server-side applications.
-         * 
-         * @param ctx A server security context.
-         * @param socket A socket handle.
-         * @param flags One or more values, bitwise OR-ed together, from the AcceptFlags enum.
-         * @returns A new secure connection.
-         * @exception std::invalid_argument - The 'ctx' parameter is not a server security context,
-         * or the 'socket' parameter contains an invalid socket handle, or the 'flags' parameter contains
-         * an invalid value.
-         * @exception SecurityException
-         */
-        static SecureConnection Accept(const SecurityContext& ctx, const Sockets::NativeSocket_t socket, const AcceptFlags flags);
 
     };
 

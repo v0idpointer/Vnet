@@ -6,6 +6,7 @@
 #include <Vnet/Uri.h>
 #include <Vnet/IpAddress.h>
 #include <Vnet/BadUriException.h>
+#include <Vnet/Util/String.h>
 
 #include <algorithm>
 #include <sstream>
@@ -256,6 +257,8 @@ std::optional<Uri> Uri::ParseUri(std::string_view str, const bool exceptions) {
     if ((pos = str.find(':')) != std::string_view::npos) {
 
         uri.m_scheme = str.substr(0, pos);
+        ToLowercase(uri.m_scheme->begin(), uri.m_scheme->end());
+
         it = std::find_if(uri.m_scheme->begin(), uri.m_scheme->end(), [] (const char ch) -> bool {
             
             if ((ch >= 'A') && (ch <= 'Z')) return false;
@@ -382,7 +385,10 @@ std::optional<Uri> Uri::ParseUri(std::string_view str, const bool exceptions) {
         }
 
         if (authority.empty()) uri.m_host = std::nullopt;
-        else uri.m_host = authority;
+        else {
+            uri.m_host = authority;
+            ToLowercase(uri.m_host->begin(), uri.m_host->end());
+        }
 
     }
 
