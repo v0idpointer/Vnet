@@ -14,7 +14,7 @@
 /**
  * The minor version of Vnet.
  */
-#define VNET_VERSION_MINOR 81
+#define VNET_VERSION_MINOR 82
 
 /**
  * The patch number.
