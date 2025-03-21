@@ -14,6 +14,7 @@
 #include <functional>
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 #include <exception>
 #include <stdexcept>
 
@@ -28,6 +29,7 @@ namespace Vnet {
     private:
         bool m_active;
         std::int32_t m_threadCount;
+        std::atomic_int32_t m_activeCount;
         std::vector<std::thread> m_threads;
         std::queue<std::tuple<std::function<void(Ts...)>, std::tuple<Ts...>>> m_jobQueue;
         std::mutex m_mutex;
@@ -63,7 +65,7 @@ namespace Vnet {
          * @param fn The function to be executed.
          * @param args The arguments passed to the function.
          */
-        void EnqueueJob(const std::function<void(Ts...)> fn, Ts... args);
+        void EnqueueJob(const std::function<void(Ts...)> fn, Ts&&... args);
 
         /**
          * Returns the number of threads in the thread pool.
@@ -71,6 +73,13 @@ namespace Vnet {
          * @returns An integer.
          */
         std::int32_t GetThreadCount(void) const;
+
+        /**
+         * Returns the number of currently active threads.
+         * 
+         * @returns An integer.
+         */
+        std::int32_t GetActiveThreadCount(void) const;
 
         /**
          * Returns the number of jobs currently in the job queue.
@@ -89,6 +98,7 @@ namespace Vnet {
 
         this->m_active = true;
         this->m_threadCount = threadCount;
+        this->m_activeCount = 0;
         this->m_threads = std::vector<std::thread>(threadCount);
         this->m_jobQueue = { };
 
@@ -125,27 +135,37 @@ namespace Vnet {
 
                 if (!this->m_active) return;
 
-                t = this->m_jobQueue.front();
+                t = std::move(this->m_jobQueue.front());
                 this->m_jobQueue.pop();
+                ++this->m_activeCount;
 
             }
+            
+            auto& func = std::get<0>(t);
+            auto& args = std::get<1>(t);
+            std::apply(func, std::move(args));
 
-            std::apply(std::get<0>(t), std::get<1>(t));
+            --this->m_activeCount;
 
         }
 
     }
 
     template <typename... Ts>
-    inline void ThreadPool<Ts...>::EnqueueJob(const std::function<void(Ts...)> fn, Ts... args) {
+    inline void ThreadPool<Ts...>::EnqueueJob(const std::function<void(Ts...)> fn, Ts&&... args) {
         const std::lock_guard<std::mutex> guard(this->m_mutex);
-        this->m_jobQueue.push({ fn, { args... } });
+        this->m_jobQueue.emplace(fn, std::make_tuple(std::forward<Ts>(args)...));
         this->m_condition.notify_one();
     }
 
     template <typename... Ts>
     inline std::int32_t ThreadPool<Ts...>::GetThreadCount() const {
         return this->m_threadCount;
+    }
+
+    template <typename... Ts>
+    inline std::int32_t ThreadPool<Ts...>::GetActiveThreadCount() const {
+        return this->m_activeCount.load();
     }
 
     template <typename... Ts>

@@ -32,9 +32,21 @@ HttpStream::HttpStream(std::shared_ptr<Socket> socket, std::shared_ptr<SecureCon
 
 }
 
-HttpStream::HttpStream(const HttpStream& stream) : NetworkStream(stream) { }
+HttpStream::HttpStream(const HttpStream& stream) : NetworkStream(stream) { 
 
-HttpStream::HttpStream(HttpStream&& stream) noexcept : NetworkStream(std::move(stream)) { }
+    this->m_networkOptions = stream.m_networkOptions;
+    this->m_httpOptions = stream.m_httpOptions;
+    this->m_transferEncoding = stream.m_transferEncoding;
+
+}
+
+HttpStream::HttpStream(HttpStream&& stream) noexcept : NetworkStream(std::move(stream)) { 
+
+    this->m_networkOptions = std::move(stream.m_networkOptions);
+    this->m_httpOptions = std::move(stream.m_httpOptions);
+    this->m_transferEncoding = stream.m_transferEncoding;
+
+}
 
 HttpStream::~HttpStream() { }
 
