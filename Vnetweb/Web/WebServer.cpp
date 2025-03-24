@@ -19,7 +19,6 @@
     constexpr std::int32_t SOCKET_ERROR_WOULD_BLOCK = EWOULDBLOCK;
 #endif
 
-#include <iostream>
 #include <cstring>
 
 using namespace Vnet;
@@ -29,11 +28,12 @@ using namespace Vnet::Http;
 using namespace Vnet::Sockets;
 using namespace Vnet::Security;
 
-WebServer::WebServer(const std::int32_t threadCount) {
+WebServer::WebServer(std::shared_ptr<ILogger> logger, const std::int32_t threadCount) {
 
     if (threadCount <= 0)
         throw std::invalid_argument("'threadCount': Cannot create a thread pool of zero or fewer threads.");
 
+    this->m_logger = std::move(logger);
     this->m_threadPool = std::make_unique<decltype(WebServer::m_threadPool)::element_type>(threadCount);
 
     this->m_running = true;
@@ -47,6 +47,10 @@ WebServer::~WebServer() {
     this->m_running = false;
     this->m_managerThread.join();
 
+}
+
+void WebServer::Log(const SeverityLevel severity, const std::string& message) const {
+    if (this->m_logger) this->m_logger->Log(severity, message);
 }
 
 void WebServer::Bind(const std::optional<IpAddress>& ipAddr, const Port port) {
@@ -79,13 +83,13 @@ void WebServer::ManagerThreadProc() {
         lock.unlock();
 
         if (!WebServer::IsConnected(*stream->GetSocket())) {
-            std::cout << "Socket disconnected. Connection dropped." << std::endl;
+            this->Info("Socket disconnected. Connection dropped.");
             continue;
         }
 
         if (WebServer::HasAvailableData(*stream)) {
             this->m_threadPool->EnqueueJob(&WebServer::ConnectionHandlerProc, this, std::move(stream), std::nullopt);
-            std::cout << "Connection enqueued." << std::endl;
+            this->Info("Connection enqueued.");
             continue;
         }
 
@@ -111,12 +115,12 @@ void WebServer::ConnectionHandlerProc(std::unique_ptr<HttpStream> stream, std::o
 
         try { stream->Receive(req.emplace()); }
         catch (const HttpException& ex) {
-            std::cout << "Receive: " << ex.what() << std::endl;
+            this->Err("Receive: {0}", ex.what());
             res.SetStatusCode(ex.GetStatusCode().value_or(HttpStatusCode::BAD_REQUEST));
             req = std::nullopt;
         }
         catch (const std::exception& ex) {
-            std::cout << "Receive: " << ex.what() << std::endl;
+            this->Err("Receive: {0}", ex.what());
             return;
         }
 
@@ -135,7 +139,7 @@ void WebServer::ConnectionHandlerProc(std::unique_ptr<HttpStream> stream, std::o
     // send the response:
     try { stream->Send(res); }
     catch (const std::exception& ex) {
-        std::cout << "Send: " << ex.what() << std::endl;
+        this->Err("Send: {0}", ex.what());
         return;
     }
 
@@ -143,7 +147,7 @@ void WebServer::ConnectionHandlerProc(std::unique_ptr<HttpStream> stream, std::o
 
         try { stream->Close(); }
         catch (const SocketException& ex) {
-            std::cout << "Close: " << ex.what() << std::endl;
+            this->Err("Close: {0}", ex.what());
             return;
         }
 
@@ -251,13 +255,15 @@ bool WebServer::AddConnection(std::unique_ptr<HttpStream>&& connection, HttpRequ
 std::unique_ptr<WebServer> WebServer::Create(
     const std::optional<IpAddress>& ipAddr,
     const std::optional<Port> port,
-    const std::optional<std::int32_t> threadCount
+    const std::optional<std::int32_t> threadCount,
+    std::shared_ptr<ILogger> logger
 ) {
 
     std::int32_t hardwareConcurency = std::thread::hardware_concurrency();
     if (hardwareConcurency <= 0) hardwareConcurency = 1;
     
     std::unique_ptr<WebServer> server = std::unique_ptr<WebServer>(new WebServer(
+        std::move(logger),
         threadCount.value_or(hardwareConcurency)
     ));
 

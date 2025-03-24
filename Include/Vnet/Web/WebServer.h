@@ -9,6 +9,9 @@
 #include <Vnet/IpAddress.h>
 #include <Vnet/ThreadPool.h>
 #include <Vnet/Net/HttpStream.h>
+#include <Vnet/Web/ILogger.h>
+
+#include <format>
 
 namespace Vnet::Web {
 
@@ -18,6 +21,8 @@ namespace Vnet::Web {
     class VNETWEBAPI WebServer {
 
     private:
+        std::shared_ptr<ILogger> m_logger;
+
         bool m_running;
         bool m_managing;
         std::mutex m_mutex;
@@ -34,7 +39,7 @@ namespace Vnet::Web {
         // std::unique_ptr<Vnet::Sockets::Socket> m_socket;
         // std::unique_ptr<Vnet::Security::SecurityContext> m_ctx;
 
-        WebServer(const std::int32_t threadCount);
+        WebServer(std::shared_ptr<ILogger> logger, const std::int32_t threadCount);
 
     public:
         WebServer(const WebServer&) = delete;
@@ -45,6 +50,38 @@ namespace Vnet::Web {
         WebServer& operator= (WebServer&&) noexcept = delete;
 
     private:
+        void Log(const SeverityLevel, const std::string&) const;
+
+        template <typename... Args>
+        inline void Trace(const std::string& fmt, Args&&... args) const {
+            this->Log(SeverityLevel::TRACE, std::vformat(fmt, std::make_format_args(args...)));
+        }
+
+        template <typename... Args>
+        inline void Debug(const std::string& fmt, Args&&... args) const {
+            this->Log(SeverityLevel::DEBUG, std::vformat(fmt, std::make_format_args(args...)));
+        }
+
+        template <typename... Args>
+        inline void Info(const std::string& fmt, Args&&... args) const {
+            this->Log(SeverityLevel::INFO, std::vformat(fmt, std::make_format_args(args...)));
+        }
+
+        template <typename... Args>
+        inline void Warn(const std::string& fmt, Args&&... args) const {
+            this->Log(SeverityLevel::WARN, std::vformat(fmt, std::make_format_args(args...)));
+        }
+
+        template <typename... Args>
+        inline void Err(const std::string& fmt, Args&&... args) const {
+            this->Log(SeverityLevel::ERR, std::vformat(fmt, std::make_format_args(args...)));
+        }
+
+        template <typename... Args>
+        inline void Fatal(const std::string& fmt, Args&&... args) const {
+            this->Log(SeverityLevel::FATAL, std::vformat(fmt, std::make_format_args(args...)));
+        }
+
         void Bind(const std::optional<Vnet::IpAddress>&, const Vnet::Port);
 
         void ListenerThreadProc(void);
@@ -65,13 +102,15 @@ namespace Vnet::Web {
          * @param ipAddr
          * @param port
          * @param threadCount
+         * @param logger
          * @returns
          * @exception std::invalid_argument - The 'threadCount' parameter is less than or equal to zero.
          */
         static std::unique_ptr<WebServer> Create(
             const std::optional<Vnet::IpAddress>& ipAddr,
             const std::optional<Vnet::Port> port,
-            const std::optional<std::int32_t> threadCount
+            const std::optional<std::int32_t> threadCount,
+            std::shared_ptr<ILogger> logger
         );
 
     };
