@@ -39,6 +39,8 @@ namespace Vnet::Web {
         std::unique_ptr<Vnet::Sockets::Socket> m_socket;
         std::unique_ptr<Vnet::Security::SecurityContext> m_ctx;
 
+        std::atomic_bool m_managerIdle, m_listenerIdle; // flags to check if a thread has entered it's idle state.
+
         WebServer(std::shared_ptr<ILogger> logger, const std::int32_t threadCount);
 
     public:
@@ -83,6 +85,7 @@ namespace Vnet::Web {
         }
 
         void Bind(const std::optional<Vnet::IpAddress>&, const Vnet::Port);
+        bool CloseConnections(void);
 
         void ListenerThreadProc(void);
         void ManagerThreadProc(void);

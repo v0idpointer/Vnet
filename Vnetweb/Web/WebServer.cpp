@@ -37,6 +37,9 @@ WebServer::WebServer(std::shared_ptr<ILogger> logger, const std::int32_t threadC
     this->m_logger = std::move(logger);
     this->m_threadPool = std::make_unique<decltype(WebServer::m_threadPool)::element_type>(threadCount);
 
+    this->m_managerIdle = true;
+    this->m_listenerIdle = true;
+
     this->m_running = true;
     this->m_managing = true;
     this->m_managerThread = std::thread(&WebServer::ManagerThreadProc, this);
@@ -44,13 +47,17 @@ WebServer::WebServer(std::shared_ptr<ILogger> logger, const std::int32_t threadC
 }
 
 WebServer::~WebServer() {
-    
-    this->m_running = false;
-    this->m_managerThread.join();
 
-    // TODO: properly shutdown the listener thread (and socket)!
-    if (this->m_listenerThread.has_value())
+    this->CloseConnections();
+
+    this->m_running = false;
+
+    if (this->m_listenerThread.has_value()) {
         this->m_listenerThread->join();
+        this->m_socket->Close();
+    }
+
+    this->m_managerThread.join();
 
 }
 
@@ -85,6 +92,44 @@ void WebServer::Bind(const std::optional<IpAddress>& ipAddr, const Port port) {
 
 }
 
+bool WebServer::CloseConnections() {
+    
+    std::unique_lock<std::mutex> lock = { this->m_mutex, std::defer_lock };
+
+    bool listening = this->m_listening;
+
+    lock.lock();
+    this->m_listening = false;
+    this->m_managing = false;
+    lock.unlock();
+
+    // wait!!!
+    while (true) {
+        if (this->m_listenerIdle && this->m_managerIdle && (this->m_threadPool->GetActiveThreadCount() == 0)) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    lock.lock();
+    
+    // close the connections:
+    while (!this->m_connections.empty()) {
+
+        std::unique_ptr<HttpStream> stream = std::move(this->m_connections.front());
+        this->m_connections.pop();
+
+        try { stream->Close(); }
+        catch (std::exception& ex) {
+            this->Err("CloseConnections: HttpStream::Close failed: {0}", ex.what());
+        }
+
+    }
+
+    this->m_managing = true;
+    lock.unlock();
+
+    return listening;
+}
+
 void WebServer::ListenerThreadProc() {
     while (this->m_running) {
 
@@ -92,8 +137,11 @@ void WebServer::ListenerThreadProc() {
 
         if (!this->m_listening) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            this->m_listenerIdle = true;
             continue;
         }
+
+        this->m_listenerIdle = false;
 
         if (!this->m_socket->Poll(PollEvent::READ, 10))
             continue;
@@ -140,8 +188,11 @@ void WebServer::ManagerThreadProc() {
 
         if (!this->m_managing) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            this->m_managerIdle = true;
             continue;
         }
+
+        this->m_managerIdle = false;
 
         lock.lock();
         if (this->m_connections.empty()) {
@@ -179,7 +230,7 @@ void WebServer::ConnectionHandlerProc(std::unique_ptr<HttpStream> stream, std::o
     std::optional<HttpRequest> req;
     HttpResponse res;
 
-    bool keepAlive = false;
+    bool keepAlive = true;
 
     // read the request:
     if (request.has_value()) req = std::move(request.value());
