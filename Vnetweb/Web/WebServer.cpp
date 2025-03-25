@@ -7,6 +7,7 @@
 #include <Vnet/Web/WebServer.h>
 #include <Vnet/Sockets/IpSocketAddress.h>
 #include <Vnet/Sockets/SocketException.h>
+#include <Vnet/Security/SecurityException.h>
 #include <Vnet/Http/HttpException.h>
 
 #ifdef VNET_PLATFORM_WINDOWS
@@ -47,6 +48,10 @@ WebServer::~WebServer() {
     this->m_running = false;
     this->m_managerThread.join();
 
+    // TODO: properly shutdown the listener thread (and socket)!
+    if (this->m_listenerThread.has_value())
+        this->m_listenerThread->join();
+
 }
 
 void WebServer::Log(const SeverityLevel severity, const std::string& message) const {
@@ -54,11 +59,78 @@ void WebServer::Log(const SeverityLevel severity, const std::string& message) co
 }
 
 void WebServer::Bind(const std::optional<IpAddress>& ipAddr, const Port port) {
-    // TODO: implement.
+    
+    const IpSocketAddress sockaddr = { ipAddr.value_or(IpAddress::ANY), port };
+
+    this->m_socket = std::make_unique<Socket>(
+        sockaddr.GetAddressFamily(),
+        SocketType::STREAM,
+        Protocol::TCP
+    );
+
+    try { this->m_socket->Bind(sockaddr); }
+    catch (const SocketException& ex) {
+
+        throw SocketException(
+            ex.GetErrorCode(),
+            std::format("Failed to bind to port. Is there another server running on port {0}?", port)
+        );
+
+    }
+
+    this->m_socket->Listen();
+
+    this->m_listening = true;
+    this->m_listenerThread = std::thread(&WebServer::ListenerThreadProc, this);
+
 }
 
 void WebServer::ListenerThreadProc() {
-    // TODO: implement.
+    while (this->m_running) {
+
+        std::unique_lock<std::mutex> lock = { this->m_mutex, std::defer_lock };
+
+        if (!this->m_listening) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+
+        if (!this->m_socket->Poll(PollEvent::READ, 10))
+            continue;
+
+        std::optional<Socket> socket;
+        std::optional<SecureConnection> ssl;
+
+        try { socket = this->m_socket->Accept(); }
+        catch (const SocketException& ex) {
+            this->Err("ListenerThreadProc: Socket::Accept failed: {0} (error code: 0x{1:08X})", ex.what(), ex.GetErrorCode());
+            continue;
+        }
+
+        lock.lock();
+
+        if (this->m_ctx) {
+
+            try { ssl = SecureConnection::Accept(*this->m_ctx, *this->m_socket, AcceptFlags::NONE); }
+            catch (const SecurityException& ex) {
+                this->Err("ListenerThreadProc: SecureConnection::Accept failed: {0} (error code: 0x{1:08X})", ex.what(), ex.GetErrorCode());
+                lock.unlock();
+                continue;
+            }
+
+        }
+
+        std::unique_ptr<HttpStream> stream = std::make_unique<HttpStream>(
+            std::make_shared<Socket>(std::move(*socket)),
+            (ssl.has_value() ? std::make_shared<SecureConnection>(std::move(*ssl)) : nullptr)
+        );
+
+        this->m_connections.push(std::move(stream));
+        this->Info("ListenerThreadProc: connection accepted.");
+
+        lock.unlock();
+
+    }
 }
 
 void WebServer::ManagerThreadProc() { 

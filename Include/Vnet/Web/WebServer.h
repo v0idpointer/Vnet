@@ -34,10 +34,10 @@ namespace Vnet::Web {
             std::optional<Vnet::Http::HttpRequest>
         >> m_threadPool;
 
-        // bool m_listening;
-        // std::optional<std::thread> m_listenerThread;
-        // std::unique_ptr<Vnet::Sockets::Socket> m_socket;
-        // std::unique_ptr<Vnet::Security::SecurityContext> m_ctx;
+        bool m_listening;
+        std::optional<std::thread> m_listenerThread;
+        std::unique_ptr<Vnet::Sockets::Socket> m_socket;
+        std::unique_ptr<Vnet::Security::SecurityContext> m_ctx;
 
         WebServer(std::shared_ptr<ILogger> logger, const std::int32_t threadCount);
 
@@ -105,6 +105,7 @@ namespace Vnet::Web {
          * @param logger
          * @returns
          * @exception std::invalid_argument - The 'threadCount' parameter is less than or equal to zero.
+         * @exception SocketException
          */
         static std::unique_ptr<WebServer> Create(
             const std::optional<Vnet::IpAddress>& ipAddr,
